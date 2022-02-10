@@ -1,0 +1,9 @@
+function main() {
+    let i = 5;
+    $$ increasing if it is greater than 10 $$
+        if(i < 10 && x > 20) {
+            i += 2;
+
+        }
+}
+
