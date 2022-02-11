@@ -1,0 +1,14 @@
+function main(){
+  let i = 0;
+
+  loop(i<10){
+    if(i%2){
+      print("one");
+    }else if(i&2){
+      print("two");
+    }else{
+      print("three");
+    }
+  }(i++)
+
+}

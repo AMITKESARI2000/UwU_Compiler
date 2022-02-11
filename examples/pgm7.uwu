@@ -1,0 +1,18 @@
+function true_key(){
+  print("true key, good");
+}
+
+function false_key(){
+  print("false key, bad");
+}
+
+function main(){
+  const user_key = "keykeyspecialkey";
+
+  if(user_key[0] == 'k'){
+    true_key();
+  }else{
+    false_key();
+  }
+
+}
