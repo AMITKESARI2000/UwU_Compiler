@@ -2,7 +2,7 @@ function main () {
     let a = 10;
     let b = "20";
     let c = a + b;
-    let d = "amit";
+    let d = "amit kesari";
     print(c);
     
 }

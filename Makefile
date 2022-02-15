@@ -9,7 +9,7 @@
 #
 
 CC = g++
-CCFLAGS = -std=c++17
+CCFLAGS = -std=c++17 -Wall -g
 
 all: lex.yy.c
 	${CC} lex.yy.c -o lexer

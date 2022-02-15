@@ -3,68 +3,72 @@
     int a = 0;
 
 %}
-let "let"
-const "const"
-if "if"
-else "else"
-loop "loop"
-stop "stop"
-continue "continue"
-function "function"
-return "return"
-print "print"
-main "main"
+let         "let"
+const       "const"
+if          "if"
+else        "else"
+loop        "loop"
+stop        "stop"
+continue    "continue"
+function    "function"
+return      "return"
+print       "print"
+main        "main"
+input       "input"
 
-eq "=="
-ne "!="
-lt "<"
-le "<="
-gt ">"
-ge ">="
+eq          "=="
+ne          "!="
+lt          "<"
+le          "<="
+gt          ">"
+ge          ">="
 
-assign "="
-incone "++"
-decone "--"
-incassign "+="
-decassign "-="
-mulassign "*="
-divassign "/="
+assign      "="
+incone      "++"
+decone      "--"
+incassign   "+="
+decassign   "-="
+mulassign   "*="
+divassign   "/="
 
-plus "+"
-minus "-"
-mult "*"
-divide "/"
-rem "%"
-bitand "&"
-bitor "|"
-neg "!"
-xor "^"
-and "&&"
-or "||"
+plus        "+"
+minus       "-"
+mult        "*"
+divide      "/"
+rem         "%"
+bitand      "&"
+bitor       "|"
+neg         "!"
+xor         "^"
+and         "&&"
+or          "||"
 
-lparen "("
-rparen ")"
-lsparen "["
-rsparen "]"
-lcparen "{"
-rcparen "}"
+lparen      "("
+rparen      ")"
+lsparen     "["
+rsparen     "]"
+lcparen     "{"
+rcparen     "}"
 
-comment "$$"
-semicol ";"
-space " "
+comment     "$$"
+semicol     ";"
+space       " "
 
-digit [0-9]
-number digit+
-letter [A-Za-z]
-letter_ [A-Za-z_]
-identifier {letter_}+({digit}|{letter_})*
+digit       [0-9]
+number      {digit}+
+float       {digit}+\.{digit}+
+letter      [A-Za-z]
+letter_     [A-Za-z_]
+identifier  {letter_}+({digit}|{letter_})*
 
-expr ({identifier}{relop}{identifier}|{identifier})
+expr        ({identifier}{relop}{identifier}|{identifier})
 
 %%
-{let}|{const}|{if}|{else}|{loop}|{stop}|{continue}|{function}|{return}|{print}|{main}     {printf("\nKEYWORD: %s", yytext);}
 
-{comment}({identifier}|{digit}+|{space})*{comment}   {printf("\nCOMMENT: %s", yytext);}
+{let}|{const}|{if}|{else}|{loop}|{stop}|{continue}|{function}|{return}|{print}|{main}|{input}     {printf("\nKEYWORD: %s", yytext);}
+
+{comment}(.)*{comment}   {printf("\nCOMMENT: %s", yytext);}
+\"({identifier}|{number}|{space})*\"     {printf("\nSTRING: %s", yytext);}
 
 {eq}        {printf("\nEQ");}
 {ne}        {printf("\nNE");}
@@ -103,14 +107,16 @@ expr ({identifier}{relop}{identifier}|{identifier})
 {lcparen}   {printf("\nLCPAREN");}
 {rcparen}   {printf("\nRCPAREN");}
 
-{semicol}   {printf("\nSEMICOL");}
 
 
-{digit}+                        {printf("\nNUMBER: %s", yytext); }
+{number}                        {printf("\nNUMBER: %s", yytext); }
+{float}                         {printf("\nFLOAT: %s", yytext); }
 {identifier}                    {printf("\nIDENTIFIER: %s", yytext); }
-\"({identifier}|{digit}+)\"     {printf("\nSTRING: %s", yytext);}
 
+{semicol}                       {printf("\nSEMICOL");}
 {space}                         {printf("");} 
+\n                              {printf("\n"); }
+\t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
 
 %%
