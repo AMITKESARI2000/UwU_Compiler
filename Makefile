@@ -20,5 +20,5 @@ lex.yy.c: lexer.l
 .PHONY: all clean
 	# specifically specifying that these are not file name
 clean:
-	rm -rvf *.o *.out *.exe lexer
+	rm -rvf *.o *.out *.exe lexer lex.yy.c
 

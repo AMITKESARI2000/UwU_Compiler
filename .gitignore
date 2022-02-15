@@ -1,5 +1,6 @@
-# obj
+# obj and garbage
 lexer
+lex.yy.c
 
 # Prerequisites
 *.d
