@@ -1,6 +1,10 @@
 %{
 
+    #include <bits/stdc++.h>
+    using namespace std;
     int a = 0;
+    vector<string>tokens;
+    map<string,string>ma;
 
 %}
 let         "let"
@@ -65,59 +69,59 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 %%
 
-{let}|{const}|{if}|{else}|{loop}|{stop}|{continue}|{function}|{return}|{print}|{main}|{input}     {printf("\nKEYWORD: %s", yytext);}
+{let}|{const}|{if}|{else}|{loop}|{stop}|{continue}|{function}|{return}|{print}|{main}|{input}     {printf("\nKEYWORD: %s", yytext);tokens.push_back(strdup(yytext));}
 
 {comment}(.)*{comment}   {printf("\nCOMMENT: %s", yytext);}
 \"({identifier}|{number}|{space})*\"     {printf("\nSTRING: %s", yytext);}
 
-{eq}        {printf("\nEQ");}
-{ne}        {printf("\nNE");}
-{lt}        {printf("\nLT");}
-{le}        {printf("\nLE");}
-{gt}        {printf("\nGT");}
-{ge}        {printf("\nGE");}
+{eq}        {printf("\nEQ");tokens.push_back(strdup(yytext));}
+{ne}        {printf("\nNE");tokens.push_back(strdup(yytext));}
+{lt}        {printf("\nLT");tokens.push_back(strdup(yytext));}
+{le}        {printf("\nLE");tokens.push_back(strdup(yytext));}
+{gt}        {printf("\nGT");tokens.push_back(strdup(yytext));}
+{ge}        {printf("\nGE");tokens.push_back(strdup(yytext));}
 
 
-{assign}    {printf("\nASSIGN");}
-{incone}    {printf("\nINCONE");}
-{decone}    {printf("\nDECONE");}
-{incassign} {printf("\nINCASSIGN");}
-{decassign} {printf("\nDECASSIGN");}
-{mulassign} {printf("\nMULASSIGN");}
-{divassign} {printf("\nDIVASSIGN");}
+{assign}    {printf("\nASSIGN");tokens.push_back(strdup(yytext));}
+{incone}    {printf("\nINCONE");tokens.push_back(strdup(yytext));}
+{decone}    {printf("\nDECONE");tokens.push_back(strdup(yytext));}
+{incassign} {printf("\nINCASSIGN");tokens.push_back(strdup(yytext));}
+{decassign} {printf("\nDECASSIGN");tokens.push_back(strdup(yytext));}
+{mulassign} {printf("\nMULASSIGN");tokens.push_back(strdup(yytext));}
+{divassign} {printf("\nDIVASSIGN");tokens.push_back(strdup(yytext));}
 
 
-{plus}      {printf("\nPLUS");}
-{minus}     {printf("\nMINUS");}
-{mult}      {printf("\nMULT");}
-{divide}    {printf("\nDIVIDE");}
-{rem}       {printf("\nREM");}
-{bitand}    {printf("\nBITAND");}
-{bitor}     {printf("\nBITOR");}
-{neg}       {printf("\nNEG");}
-{xor}       {printf("\nXOR");}
-{and}       {printf("\nAND");}
-{or}        {printf("\nOR");}
+{plus}      {printf("\nPLUS");tokens.push_back(strdup(yytext));}
+{minus}     {printf("\nMINUS");tokens.push_back(strdup(yytext));}
+{mult}      {printf("\nMULT");tokens.push_back(strdup(yytext));}
+{divide}    {printf("\nDIVIDE");tokens.push_back(strdup(yytext));}
+{rem}       {printf("\nREM");tokens.push_back(strdup(yytext));}
+{bitand}    {printf("\nBITAND");tokens.push_back(strdup(yytext));}
+{bitor}     {printf("\nBITOR");tokens.push_back(strdup(yytext));}
+{neg}       {printf("\nNEG");tokens.push_back(strdup(yytext));}
+{xor}       {printf("\nXOR");tokens.push_back(strdup(yytext));}
+{and}       {printf("\nAND");tokens.push_back(strdup(yytext));}
+{or}        {printf("\nOR");tokens.push_back(strdup(yytext));}
 
 
-{lparen}    {printf("\nLPAREN");}
-{rparen}    {printf("\nRPAREN");}
-{lsparen}   {printf("\nLSPAREN");}
-{rsparen}   {printf("\nRSPAREN");}
-{lcparen}   {printf("\nLCPAREN");}
-{rcparen}   {printf("\nRCPAREN");}
+{lparen}    {printf("\nLPAREN");tokens.push_back(strdup(yytext));}
+{rparen}    {printf("\nRPAREN");tokens.push_back(strdup(yytext));}
+{lsparen}   {printf("\nLSPAREN");tokens.push_back(strdup(yytext));}
+{rsparen}   {printf("\nRSPAREN");tokens.push_back(strdup(yytext));}
+{lcparen}   {printf("\nLCPAREN");tokens.push_back(strdup(yytext));}
+{rcparen}   {printf("\nRCPAREN");tokens.push_back(strdup(yytext));}
 
 
 
-{number}                        {printf("\nNUMBER: %s", yytext); }
-{float}                         {printf("\nFLOAT: %s", yytext); }
-{identifier}                    {printf("\nIDENTIFIER: %s", yytext); }
+{number}                        {printf("\nNUMBER: %s", yytext); tokens.push_back(strdup(yytext));}
+{float}                         {printf("\nFLOAT: %s", yytext); tokens.push_back(strdup(yytext));}
+{identifier}                    { printf("\nIDENTIFIER: %s", yytext); tokens.push_back(strdup(yytext)); if(tokens[tokens.size()-2]=="let") ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";",cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl;}
 
-{semicol}                       {printf("\nSEMICOL");}
+{semicol}                       {printf("\nSEMICOL");tokens.push_back(strdup(yytext));}
 {space}                         {printf("");} 
-\n                              {printf("\n"); }
-\t                              {printf("\t"); }
- .                              {printf("\n!!!Illegal Token!!!");}
+\n                              {printf("\n"); tokens.push_back(strdup(yytext));}
+\t                              {printf("\t"); tokens.push_back(strdup(yytext));}
+ .                              {printf("\n!!!Illegal Token!!!");tokens.push_back(strdup(yytext));}
 
 %%
 
@@ -131,6 +135,7 @@ int main (int argc, char *argv[]) {
     }
     // main function used for running
     yylex();
+    
     return 0;
 }
 
