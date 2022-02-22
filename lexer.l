@@ -3,6 +3,7 @@
     #include <bits/stdc++.h>
     using namespace std;
     int a = 0;
+    int lines=0;
     vector<string>tokens;
     map<string,string>ma;
 
@@ -115,11 +116,11 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 {number}                        {printf("\nNUMBER: %s", yytext); tokens.push_back(strdup(yytext));}
 {float}                         {printf("\nFLOAT: %s", yytext); tokens.push_back(strdup(yytext));}
-{identifier}                    { printf("\nIDENTIFIER: %s", yytext); tokens.push_back(strdup(yytext)); if(tokens[tokens.size()-2]=="let") ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";",cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl;}
+{identifier}                    { printf("\nIDENTIFIER: %s", yytext); tokens.push_back(strdup(yytext)); if(tokens[tokens.size()-2]=="let") ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";",cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl;}
 
 {semicol}                       {printf("\nSEMICOL");tokens.push_back(strdup(yytext));}
 {space}                         {printf("");} 
-\n                              {printf("\n"); tokens.push_back(strdup(yytext));}
+\n                              {printf("\n"); lines++;}
 \t                              {printf("\t"); tokens.push_back(strdup(yytext));}
  .                              {printf("\n!!!Illegal Token!!!");tokens.push_back(strdup(yytext));}
 
