@@ -4,6 +4,4 @@ function main () {
     let c = a + b;
     let d = "amit kesari";
     print(c);
-    
 }
-

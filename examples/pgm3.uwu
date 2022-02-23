@@ -1,7 +1,7 @@
 function greet() {
   let i=0;
   loop(i < 10) {
-    print(“Hello sir”);
+    print("Hello sir");
   }(i++)
 }
 
