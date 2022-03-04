@@ -3,9 +3,10 @@ $$ representation of a given number $$
 
 function bin( n)
 {
-	if (n > 1)
+	if (n > 1){
 		bin(n / 2);
     let ans = n % 2;
+	}
 	print ( ans);
 }
 

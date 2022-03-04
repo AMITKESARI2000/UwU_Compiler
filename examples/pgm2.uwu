@@ -1,11 +1,10 @@
 function main() {
     let ff = 10.0;
     let i = 5;
-    $$ increasing if it is greater than 10 $$
-        if(i < 10 && x > 20) {
-            i += 2;
-
-        }
+    $$ something else $$
+    if(i < 10 && x > 20) {
+        i += 2;
+    }
     $$ ending loop with some test chars: @#$%^&*.|\! $$
 }
 

@@ -60,6 +60,7 @@ rcparen     "}"
 
 comment     "$$"
 semicol     ";"
+comma       ","
 space       " "
 
 digit       [0-9]
@@ -86,7 +87,7 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {input}     {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return INPUT;}
 
 {comment}(.|\n)*{comment}                {printf("\nCOMMENT: %s", yytext);}
-\"({identifier}|{number}|{space})*\"     {printf("\nSTRING: %s", yytext); tokens.push_back(strdup(yytext)); return STRING;}
+\"(.)*\"                                 {printf("\nSTRING: %s", yytext); tokens.push_back(strdup(yytext)); return STRING;}
 
 {eq}        {printf("\nEQ"); tokens.push_back(strdup(yytext)); return EQ;}
 {lt}        {printf("\nLT"); tokens.push_back(strdup(yytext)); return LT;}
@@ -131,6 +132,7 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {float}                         {printf("\nFLOAT: %s", yytext);      tokens.push_back(strdup(yytext)); return FLOAT;}
 {identifier}                    {printf("\nIDENTIFIER: %s", yytext); tokens.push_back(strdup(yytext)); if(tokens[tokens.size()-2]=="let") ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";",cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl; return IDENTIFIER;}
 
+{comma}                         {printf("\nCOMMA"); tokens.push_back(strdup(yytext)); return COMMA;}
 {semicol}                       {printf("\nSEMICOL"); tokens.push_back(strdup(yytext)); return SEMICOL;}
 {space}                         {} 
 \n                              {printf("\n"); lines++;}

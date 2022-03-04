@@ -1,5 +1,6 @@
 function main(){
-  const day = 1;
+  let day;
+  input(day);
 
   if(day == 1){
     print("Monday");

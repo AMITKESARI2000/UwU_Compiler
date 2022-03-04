@@ -2,11 +2,11 @@ function main(){
   let i = 0;
 
   loop(i<10){
-    if(i%2){
+    if(i%2 >= 0){
       print("one");
-    }else if(i&2){
+    }else if(i&2 < 0){
       print("two");
-    }else{
+    }else if(i+1<10 && 19%6 ==0 || 5+3>5 ^ 10==0 && n>10){
       print("three");
     }
   }(i++)

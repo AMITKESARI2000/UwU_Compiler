@@ -1,18 +1,17 @@
-
 function printFloydTriangle(n)
 {
 	let i;
     let j;
     let val = 1;
-	for (i = 1; i <= n; i++)
+		loop(i<n)
 	{
-		for (j = 1; j <= i; j++)
+		loop(j<n)
 		{
-        	print ( val + " ");
-            val+=1;
-        }
+			print ( val + " ");
+			val+=1;
+    }(j++)
 		print("\n");
-	}
+	}(i = i + 10 - 10 * 10)
 }
 
 $$ Driver Code $$

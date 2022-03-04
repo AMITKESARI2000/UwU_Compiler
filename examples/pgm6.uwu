@@ -3,5 +3,5 @@ function add(a,b,c){
 }
 
 function main(){
-  print(add(1,2,3));
+  print(add(add(4,5,6),2,3));
 }

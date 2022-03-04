@@ -1,6 +1,7 @@
 function main(){
   let n=10;
   let a[n];
+  let c[10][39] [40] [o];
   let i=0;
 
   loop(i<n){
@@ -10,7 +11,7 @@ function main(){
   i=0;
   
   loop(i<n){
-    print(a[i]+"\n");
+    print(c[i][12][12][12]+"\n");
   }(i++)
 
 }
