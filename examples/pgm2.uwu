@@ -1,3 +1,6 @@
+#add <./examples/pgm4.uwu>;
+#add <./examples/pgm5.uwu>;
+
 function main() {
     let ff = 10.0;
     let i = 5;

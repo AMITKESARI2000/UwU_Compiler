@@ -1,7 +1,13 @@
-# obj and garbage
+.vscode
+
+# obj and garbage from uwu
 lexer
+parser
+preprocessor
+
 lex.yy.c
-y.output
+y.*
+*.uwupre
 
 # Prerequisites
 *.d
