@@ -1,7 +1,11 @@
+$$ #add <./examples/pgm5.uwu> $$
+#define pp::print
+#define LET::let
+
 function greet() {
-  let i=0;
+  LET i=0;
   loop(i < 10) {
-    print("Hello sir");
+    pp("Hello sir");
   }(i++)
 }
 

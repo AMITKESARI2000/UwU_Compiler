@@ -13,18 +13,27 @@
  *
  */
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
+/**
+ * @brief reads src code line by line and replace and adds necessary
+ * preprocessor directives
+ *
+ * @param fout
+ * @param SrcCode
+ */
 void processSrcLine(std::ofstream &fout, std::vector<std::string> &SrcCode) {
     const std::string ADD = "#add";
     const std::string DEFINE = "#define";
+    const std::string SEPERATOR = "::";
 
     std::map<std::string, std::string> defineDict;
 
@@ -48,7 +57,7 @@ void processSrcLine(std::ofstream &fout, std::vector<std::string> &SrcCode) {
                 ;
             lpos++;
             headerFileName = line.substr(lpos, rpos - lpos);
-            // std::cout << "\nFound line with #add-> " << headerFileName ;
+            std::cout << "\n Adding header-> " << headerFileName << std::endl;
 
             // dump all header code
             std::ifstream fin;
@@ -65,10 +74,10 @@ void processSrcLine(std::ofstream &fout, std::vector<std::string> &SrcCode) {
                 // << std::endl;
                 continue;
             }
-            std::string line;
-            while (std::getline(fin, line)) {
+            std::string tmpline;
+            while (std::getline(fin, tmpline)) {
                 // std::cout << "HEADER:::: "<<line << std::endl;
-                fout << line;
+                fout << tmpline;
             }
             fout << std::endl;
             fin.close();
@@ -78,11 +87,47 @@ void processSrcLine(std::ofstream &fout, std::vector<std::string> &SrcCode) {
             i--;
 
         } else if (pos2 != std::string::npos) {
-            const std::string SEPERATOR = "::";
-            auto sepeartorPos = line.find(SEPERATOR);
+            // found a #define pp::print line
+            auto seperatorPos = line.find(SEPERATOR);
+            if (seperatorPos == std::string::npos) {
+                std::cout << "Wrong syntax. Use #define VARNAME1::VARNAME2"
+                          << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            // get VAR1 and VAR2
+            std::string var1 = "";
+            std::string var2 = line.substr(seperatorPos + 2);
+
+            for (int i = seperatorPos - 1; line[i] != ' '; i--) {
+                var1 += line[i];
+            }
+            std::reverse(var1.begin(), var1.end());
+
+            // std::cout << var1 << "::" << var2 << std::endl;
+            // store in a dictionary for replacing in the program
+            defineDict[var1] = var2;
 
         } else {
-            //TODO: convert using dict
+            // convert #define using defineDict if found in that line
+            for (auto wordMeaning : defineDict) {
+                // find in dictionary for particular word
+                auto replacePos = line.find(wordMeaning.first);
+                if (replacePos != std::string::npos) {
+                    std::cout << " Replaced " << wordMeaning.first << " -> "
+                              << wordMeaning.second << std::endl;
+
+                    // cut before and after part, join and replace with the new
+                    // word in middle
+                    std::string prefix = line.substr(0, replacePos);
+                    std::string suffix =
+                        line.substr(replacePos + wordMeaning.first.size());
+
+                    line = prefix + wordMeaning.second + suffix;
+                    // std::cout << "NEW LINE|" << line << "|" << std::endl;
+                    break;
+                }
+            }
             fout << line;
         }
     }
@@ -100,14 +145,13 @@ int main(int argc, char **argv) {
     std::ifstream fin;
     std::ofstream fout;
 
+    // file directives
     fin.open(dataIpFilename, std::ios::in);
     fout.open(dataOpFilename, std::ios::out);
-
     if (!fin) {
         std::cout << "File not found. Exiting" << std::endl;
         exit(EXIT_FAILURE);
     }
-
     if (fout) {
         std::cout << "Removing Earlier Traces." << std::endl;
         // TODO: clear file if not already
@@ -121,11 +165,14 @@ int main(int argc, char **argv) {
     }
     fin.close();
 
+    std::cout << "\n-------------------------" << std::endl;
     processSrcLine(fout, SrcCode);
     // for (auto line : SrcCode) std::cout << "SC--->" << line << std::endl;
+    std::cout << "-------------------------" << std::endl;
 
     std::cout << std::endl;
-    std::cout << "Preprocessed file generated: " + dataOpFilename << std::endl;
+    std::cout << "Preprocessed file generated at: " + dataOpFilename
+              << std::endl;
     fout.close();
     return 0;
 }
