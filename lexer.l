@@ -130,7 +130,15 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 {number}                        {printf("\nNUMBER: %s", yytext);     tokens.push_back(strdup(yytext)); return NUMBER;}
 {float}                         {printf("\nFLOAT: %s", yytext);      tokens.push_back(strdup(yytext)); return FLOAT;}
-{identifier}                    {printf("\nIDENTIFIER: %s", yytext); tokens.push_back(strdup(yytext)); if(tokens[tokens.size()-2]=="let") ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";",cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl; return IDENTIFIER;}
+{identifier}                    {
+                                    printf("\nIDENTIFIER: %s", yytext); 
+                                    tokens.push_back(strdup(yytext)); 
+                                    if(tokens[tokens.size()-2]=="let"){
+                                        ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";";
+                                        cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl; 
+                                    }
+                                    return IDENTIFIER;
+                                }
 
 {comma}                         {printf("\nCOMMA"); tokens.push_back(strdup(yytext)); return COMMA;}
 {semicol}                       {printf("\nSEMICOL"); tokens.push_back(strdup(yytext)); return SEMICOL;}
@@ -141,18 +149,5 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 %%
 
-/* Lexical Analysis: Creates new table entries in the table, example like entries about token. */
-// int main (int argc, char *argv[]) {
-//     if(argc > 1){
-//         FILE *fp = fopen(argv[1], "r");
-//         if(fp){
-//             yyin = fp;
-//         }
-//     }
-//     // main function used for running
-//     yylex();
-    
-//     return 0;
-// }
 
 int yywrap(){return 0;}
