@@ -137,7 +137,7 @@ IDENTIFIER INCONE SEMICOL |
 IDENTIFIER DECONE SEMICOL ;
 
 Loop:
-LOOP { add('K'); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { struct node *temp = mknode($4.nd, $10.nd, "CONDITION"); $$.nd = mknode(temp, $7.nd, $1.name); } 
+LOOP { add('K'); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { struct node *temp = mknode($4.nd, $10.nd, "CONDITION"); $$.nd = mknode(temp, $7.nd, $1.name); }; 
 
 
 STATEMENT:
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
    }
    yyin = fopen(argv[1], "r");
   yyparse();
-
+	printInorder(head);
 }
 
 int search(char *type) {

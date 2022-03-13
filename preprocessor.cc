@@ -1,6 +1,6 @@
 /**
  * @file preprocessor.cc
- * @author amit kesari, aditya sharma, vaibhav gelle
+ * @author Amit Kesari, Aditya Sharma, Vaibhav Gelle
  * @brief Preprocess source code
  *        #add <filename>; // import statement
  *        #define VARNAME1::VARNAME2;  // change varname1 to varname2
