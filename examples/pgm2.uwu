@@ -4,10 +4,10 @@
 function main() {
     let ff = 10.0;
     let i = 5;
-    $$ something else $$
+    $* something else *$
     if(i < 10 && x > 20) {
         i += 2;
     }
-    $$ ending loop with some test chars: @#$%^&*.|\! $$
+    $* ending loop with some test chars: ** @#$%^&*.|\! *$
 }
 

@@ -9,9 +9,9 @@ function false_key(){
 function main(){
   const user_key = "keykeyspecialkey";
 
-  if(user_key[0] == "k"){
+  if(user_key[0] == 'k'){
     true_key();
-  }else if(user_key[0] == "2"){
+  }else if(user_key[0] == '2'){
     false_key();
   }else{
     true_key();

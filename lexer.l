@@ -58,7 +58,8 @@ rsparen     "]"
 lcparen     "{"
 rcparen     "}"
 
-comment     "$$"
+comment_start     "$*"
+comment_end     "*$"
 semicol     ";"
 comma       ","
 space       " "
@@ -86,8 +87,9 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {main}      {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return MAIN;}
 {input}     {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return INPUT;}
 
-{comment}(.|\n)*{comment}                {printf("\nCOMMENT: %s", yytext);}
-\"(.)*\"                                 {printf("\nSTRING: %s", yytext); tokens.push_back(strdup(yytext)); return STRING;}
+{comment_start}([^*]|\*+[^*$])*{comment_end}      {printf("\nCOMMENT: %s", yytext);}
+\"(\\.|[^"\\])*\"                                 {printf("\nSTRING: %s", yytext); tokens.push_back(strdup(yytext)); return STRING;}
+\'(\\.|[^'\\])*\'                                 {printf("\nSTRING: %s", yytext); tokens.push_back(strdup(yytext)); return STRING;}
 
 {eq}        {printf("\nEQ"); tokens.push_back(strdup(yytext)); return EQ;}
 {lt}        {printf("\nLT"); tokens.push_back(strdup(yytext)); return LT;}
@@ -143,7 +145,7 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {comma}                         {printf("\nCOMMA"); tokens.push_back(strdup(yytext)); return COMMA;}
 {semicol}                       {printf("\nSEMICOL"); tokens.push_back(strdup(yytext)); return SEMICOL;}
 {space}                         {} 
-\n                              {printf("\n"); lines++;}
+\n|\r                              {printf("\n"); lines++;}
 \t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
 

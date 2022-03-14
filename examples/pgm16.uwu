@@ -1,14 +1,16 @@
-$$ uwu Program to swap two numbers without $$
-$$ using temporary variable $$
+$* uwu Program to swap two numbers without *$
+$* using temporary variable 
+		this is a multiline <i class="fa fa-comment" aria-hidden="true"></i>
+*$
 
 function main()
 {
 	let x = 10;
 	let y = 5;
 
-	$$ Code to swap 'x' and 'y' $$
-	x = x + y; $$ x now becomes 15 $$
-	y = x - y; $$ y becomes 10 $$
-	x = x - y; $$ x becomes 5 $$
+	$* Code to swap 'x' and 'y' *$
+	x = x + y; $* x now becomes 15 *$
+	y = x - y; $* y becomes 10 *$
+	x = x - y; $* x becomes 5 *$
 	print( "After Swapping: x =" + x + ", y=" + y);
 }

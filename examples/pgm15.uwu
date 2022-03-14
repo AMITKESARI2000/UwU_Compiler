@@ -14,7 +14,7 @@ function printFloydTriangle(n)
 	}(i = i + 10 - 10 * 10)
 }
 
-$$ Driver Code $$
+$* Driver Code *$
 function main()
 {
 	printFloydTriangle(6);

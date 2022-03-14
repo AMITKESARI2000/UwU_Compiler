@@ -1,4 +1,4 @@
-$$ #add <./examples/pgm5.uwu> $$
+$* #add <./examples/pgm5.uwu> *$
 #define pp::print
 #define LET::let
 
@@ -10,6 +10,6 @@ function greet() {
 }
 
 function main() {
-	$$ call greetings $$
+	$* call greetings *$
 	greet();
 }

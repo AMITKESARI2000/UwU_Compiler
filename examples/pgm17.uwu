@@ -1,5 +1,5 @@
-$$ uwu Program for the binary $$
-$$ representation of a given number $$
+$* uwu Program for the binary *$
+$* representation of a given number *$
 
 function bin( n)
 {
