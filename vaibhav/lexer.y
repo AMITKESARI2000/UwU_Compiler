@@ -45,16 +45,18 @@
 	} nd_obj; 
 } 
 
-%token LET CONST IF ELSE LOOP STOP CONTINUE FUNCTION RETURN PRINT MAIN INPUT STRING EQ 
-%token LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN PLUS 
-%token MINUS MULT DIVIDE REM BITAND BITOR NEG XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
-%token LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
+%token <nd_obj> LET CONST IF ELSE LOOP STOP CONTINUE FUNCTION RETURN PRINT MAIN INPUT STRING EQ 
+%token <nd_obj> LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN PLUS 
+%token <nd_obj> MINUS MULT DIVIDE REM BITAND BITOR NEG XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
+%token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
+%type <nd_obj> stment_seq program main ARRAY VARIABLES arithmetic return PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop STATEMENT
 %%
 
-stment_seq: STATEMENT | stment_seq STATEMENT ;
+stment_seq: STATEMENT {$$.nd=mknode(NULL,NULL,$1.name);} | 
+stment_seq STATEMENT { $$.nd = mknode($1.nd, $2.nd, "statements"); } ;
 
 program:
-main LPAREN RPAREN LCPAREN stment_seq RCPAREN{ $1.nd = mknode($5.nd, NULL, "main"); $$.nd = mknode(NULL, $1.nd, "program"); head = $$.nd; };
+FUNCTIONDEF main LPAREN RPAREN LCPAREN stment_seq RCPAREN{ $2.nd = mknode($6.nd, NULL, "main"); $$.nd = mknode($1.nd, $2.nd, "program"); head = $$.nd; };
 
 main:
 FUNCTION MAIN ;
@@ -67,10 +69,10 @@ IDENTIFIER LSPAREN NUMBER RSPAREN;
 
 
 VARIABLES: 
-IDENTIFIER |
-NUMBER | 
-STRING | 
-FLOAT | 
+IDENTIFIER { $$.nd = mknode(NULL, NULL, $1.name); }|
+NUMBER { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
+STRING { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
+FLOAT { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
 ARRAY; 
 
 PARAMS:
@@ -79,27 +81,23 @@ EXPR |
 FUNCTIONCALL |
 ;
 
+arithmetic:
+PLUS |
+MINUS|
+MULT |
+DIVIDE|
+REM	 |
+BITAND|
+BITOR|
+XOR
+
 EXPR:
-LPAREN EXPR RPAREN |
-EXPR PLUS VARIABLES |
-EXPR PLUS FUNCTIONCALL |
-EXPR MINUS VARIABLES |
-EXPR MINUS FUNCTIONCALL |
-EXPR MULT VARIABLES |
-EXPR MULT FUNCTIONCALL |
-EXPR DIVIDE VARIABLES |
-EXPR DIVIDE FUNCTIONCALL |
-EXPR REM VARIABLES |
-EXPR REM FUNCTIONCALL |
-EXPR BITAND VARIABLES |
-EXPR BITAND FUNCTIONCALL |
-EXPR BITOR VARIABLES |
-EXPR BITOR FUNCTIONCALL |
-EXPR XOR VARIABLES |
-EXPR XOR FUNCTIONCALL |
-VARIABLES |
-IDENTIFIER INCONE |
-IDENTIFIER DECONE;
+LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
+EXPR arithmetic EXPR { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
+VARIABLES { $$.nd = $1.nd; } |
+FUNCTIONCALL { $$.nd = $1.nd; } |
+IDENTIFIER INCONE { $$.nd = $1.nd; } |
+IDENTIFIER DECONE { $$.nd = $1.nd; };
 
 BOOLEANS:
 EXPR EQ VARIABLES |
@@ -120,51 +118,53 @@ NEG BOOLEANS
 ;
 
 CONDITIONAL_STAMENT:
-IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN |
-IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN |
-IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT;
+IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, NULL, "if-else"); }|
+IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $11.nd, "if-else"); }|
+IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $10.nd, "if-else"); };
 
 FUNCTIONCALL:
 IDENTIFIER LPAREN PARAMS RPAREN ;
 
 FUNCTIONDEF:
-FUNCTION FUNCTIONCALL LCPAREN stment_seq RCPAREN;
+FUNCTION FUNCTIONCALL LCPAREN stment_seq return RCPAREN {$$.nd=mknode($4.nd,NULL,"function")};
 
+return: RETURN { add('K'); } EXPR ';' { $1.nd = mknode(NULL, NULL, "return"); $$.nd = mknode($1.nd, $3.nd, "RETURN"); }
+| { $$.nd = NULL; }
+;
 
 INCREMENT:
-IDENTIFIER ASSIGN EXPR |
-IDENTIFIER INCONE SEMICOL |
-IDENTIFIER DECONE SEMICOL ;
+IDENTIFIER ASSIGN EXPR {$1.nd=mknode(NULL,NULL,$1.name);$$.nd=mknode($1.nd,$3.nd,"ITERATOR");}|
+IDENTIFIER INCONE { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "ITERATOR"); }|
+IDENTIFIER DECONE { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "ITERATOR"); };
 
 Loop:
 LOOP { add('K'); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { struct node *temp = mknode($4.nd, $10.nd, "CONDITION"); $$.nd = mknode(temp, $7.nd, $1.name); }; 
 
 
 STATEMENT:
-LET IDENTIFIER ASSIGN EXPR SEMICOL |
-CONST IDENTIFIER ASSIGN EXPR SEMICOL |
-LET IDENTIFIER SEMICOL |
-LET ARRAY SEMICOL |
-IDENTIFIER ASSIGN EXPR SEMICOL |
-IDENTIFIER INCASSIGN VARIABLES SEMICOL |
-IDENTIFIER DECASSIGN VARIABLES SEMICOL |
-IDENTIFIER INCONE SEMICOL |
-IDENTIFIER DECONE SEMICOL |
-ARRAY ASSIGN EXPR SEMICOL |
+LET IDENTIFIER{ add('V'); } ASSIGN EXPR SEMICOL {$2.nd=mknode(NULL,NULL,$2.name);$$.nd=mknode($2.nd,$5.nd,"declaration");}|
+CONST IDENTIFIER{ add('V'); } ASSIGN EXPR SEMICOL {$2.nd=mknode(NULL,NULL,$2.name);$$.nd=mknode($2.nd,$5.nd,"const_declaration");}|
+LET IDENTIFIER SEMICOL {$2.nd=mknode(NULL,NULL,$2.name);$$.nd=mknode($2.nd,NULL,"initialization");}|
+/*LET ARRAY SEMICOL |*/
+IDENTIFIER ASSIGN EXPR SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "="); }|
+IDENTIFIER INCASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "+="); }|
+IDENTIFIER DECASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "-="); }|
+IDENTIFIER INCONE SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "INCREMENT"); }|
+IDENTIFIER DECONE SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "DECREMENT"); }|
+/*ARRAY ASSIGN EXPR SEMICOL |
 ARRAY INCASSIGN VARIABLES SEMICOL |
 ARRAY DECASSIGN VARIABLES SEMICOL |
 ARRAY INCONE SEMICOL |
-ARRAY DECONE SEMICOL |
-PRINT LPAREN EXPR RPAREN SEMICOL |
-PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL |
-INPUT LPAREN IDENTIFIER RPAREN SEMICOL |
-CONDITIONAL_STAMENT |
-Loop |
-RETURN EXPR SEMICOL|
-FUNCTIONCALL SEMICOL |
-FUNCTIONDEF |
-STOP SEMICOL|
-CONTINUE SEMICOL;
+ARRAY DECONE SEMICOL |*/
+PRINT LPAREN EXPR RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"print_expr"); }|
+PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"print_functionvalue"); }|
+INPUT LPAREN IDENTIFIER RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"input"); }|
+CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
+Loop { $$.nd=$1.nd; }|
+FUNCTIONCALL SEMICOL { $$.nd=$1.nd; }|
+/*FUNCTIONDEF |*/
+STOP SEMICOL{ $$.nd=mknode(NULL,NULL,"STOP"); }|
+CONTINUE SEMICOL{ $$.nd=mknode(NULL,NULL,"CONTINUE"); };
 
 %%
 
