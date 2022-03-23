@@ -3,9 +3,9 @@
   #include<stdlib.h>
   #include<string.h>
   #include<ctype.h>
-  #include"lex.yy.c"
 
-//  extern FILE * yyin;
+ extern FILE * yyin;
+ extern char *yytext;
 
   int yylex();
   int yyerror(char *);
@@ -14,52 +14,53 @@
     void add(char);
     void insert_type();
     int search(char *);
-    void insert_type();
+    
     void printtree(struct node*);
     void printInorder(struct node *);
     struct node* mknode(struct node *left, struct node *right, char *token);
 
     struct dataType {
-        char * id_name;
-        char * data_type;
-        char * type;
+        char *id_name;
+        char *data_type;
+        char *type;
         int line_no;
     } symbolTable[40];
     int count=0;
     int q;
     char type[10];
     extern int countn;
-    struct node *head;
+
     struct node { 
-	struct node *left; 
-	struct node *right; 
-	char *token; 
+		struct node *left; 
+		struct node *right; 
+		char *token; 
     };
+    struct node *head;
+
+
 
 %}
 
 %union { 
 	struct var_name { 
 		char name[100]; 
-		struct node* nd;
+		struct node *nd;
 	} nd_obj; 
-} 
+}
+
+
 
 %token <nd_obj> LET CONST IF ELSE LOOP STOP CONTINUE FUNCTION RETURN PRINT MAIN INPUT STRING EQ 
-%token <nd_obj> LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN PLUS 
-%token <nd_obj> MINUS MULT DIVIDE REM BITAND BITOR NEG XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
+%token <nd_obj> LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN 
+%left  <nd_obj> MULT DIVIDE PLUS MINUS 
+%right <nd_obj> NEG
+%token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
-%type <nd_obj> stment_seq program main ARRAY VARIABLES arithmetic return PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop STATEMENT
+%type <nd_obj> stment_seq ARRAY VARIABLES arithmetic return PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop STATEMENT
+
 %%
-
-stment_seq: STATEMENT {$$.nd=mknode(NULL,NULL,$1.name);} | 
-stment_seq STATEMENT { $$.nd = mknode($1.nd, $2.nd, "statements"); } ;
-
-program:
-FUNCTIONDEF main LPAREN RPAREN LCPAREN stment_seq RCPAREN{ $2.nd = mknode($6.nd, NULL, "main"); $$.nd = mknode($1.nd, $2.nd, "program"); head = $$.nd; };
-
-main:
-FUNCTION MAIN ;
+stment_seq: STATEMENT {$$.nd=mknode(NULL, NULL, $1.name); head = $$.nd;} | 
+stment_seq STATEMENT { $$.nd = mknode($1.nd, $2.nd, "statements");head = $$.nd; } ;
 
 ARRAY:
 ARRAY LSPAREN IDENTIFIER RSPAREN |
@@ -89,11 +90,12 @@ DIVIDE|
 REM	 |
 BITAND|
 BITOR|
-XOR
+XOR;
 
 EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
-EXPR arithmetic EXPR { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
+EXPR arithmetic VARIABLES { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
+EXPR arithmetic FUNCTIONCALL { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
 VARIABLES { $$.nd = $1.nd; } |
 FUNCTIONCALL { $$.nd = $1.nd; } |
 IDENTIFIER INCONE { $$.nd = $1.nd; } |
@@ -123,10 +125,11 @@ IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAR
 IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $10.nd, "if-else"); };
 
 FUNCTIONCALL:
-IDENTIFIER LPAREN PARAMS RPAREN ;
+IDENTIFIER LPAREN PARAMS RPAREN |
+MAIN LPAREN PARAMS RPAREN;
 
 FUNCTIONDEF:
-FUNCTION FUNCTIONCALL LCPAREN stment_seq return RCPAREN {$$.nd=mknode($4.nd,NULL,"function")};
+FUNCTION FUNCTIONCALL LCPAREN stment_seq return RCPAREN {$$.nd=mknode($4.nd,NULL,"function");};
 
 return: RETURN { add('K'); } EXPR ';' { $1.nd = mknode(NULL, NULL, "return"); $$.nd = mknode($1.nd, $3.nd, "RETURN"); }
 | { $$.nd = NULL; }
@@ -162,9 +165,10 @@ INPUT LPAREN IDENTIFIER RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.n
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; }|
 FUNCTIONCALL SEMICOL { $$.nd=$1.nd; }|
-/*FUNCTIONDEF |*/
+FUNCTIONDEF |
 STOP SEMICOL{ $$.nd=mknode(NULL,NULL,"STOP"); }|
 CONTINUE SEMICOL{ $$.nd=mknode(NULL,NULL,"CONTINUE"); };
+
 
 %%
 
@@ -176,7 +180,7 @@ int main(int argc, char *argv[])
    }
    yyin = fopen(argv[1], "r");
   yyparse();
-	printInorder(head);
+	printtree(head);
 }
 
 int search(char *type) {
