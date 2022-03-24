@@ -3,10 +3,9 @@
   #include<stdlib.h>
   #include<string.h>
   #include<ctype.h>
-  
 
   extern FILE * yyin;
-  extern const char* yytext;-
+  extern const char* yytext;
 
   int yylex();
   int yyerror(char *);
@@ -53,16 +52,8 @@
 %type <nd_obj> stment_seq program main ARRAY VARIABLES arithmetic return PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop STATEMENT
 %%
 
-
-program:
-FUNCTIONDEF main LPAREN RPAREN LCPAREN stment_seq RCPAREN{ $2.nd = mknode($6.nd, NULL, "main"); $$.nd = mknode($1.nd, $2.nd, "program"); head = $$.nd; }|
-main LPAREN RPAREN LCPAREN stment_seq RCPAREN{$1.nd = mknode($5.nd, NULL, "main"); $$.nd = mknode(NULL, $1.nd, "program"); head = $$.nd; };
-
-stment_seq: STATEMENT {$$.nd=mknode(NULL,NULL,$1.name);} | 
-stment_seq STATEMENT { $$.nd = mknode($1.nd, $2.nd, "statements"); } ;
-
-main:
-FUNCTION MAIN ;
+stment_seq: STATEMENT {$$.nd=mknode(NULL,NULL,$1.name);head = $$.nd;} | 
+stment_seq STATEMENT { $$.nd = mknode($1.nd, $2.nd, "statements"); head = $$.nd;} ;
 
 ARRAY:
 ARRAY LSPAREN IDENTIFIER RSPAREN |
@@ -75,10 +66,8 @@ VARIABLES:
 IDENTIFIER { $$.nd = mknode(NULL, NULL, $1.name); }|
 NUMBER { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
 STRING { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
-FLOAT { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }
-// | 
-// ARRAY
-; 
+FLOAT { add('C'); $$.nd = mknode(NULL, NULL, $1.name); }| 
+ARRAY; 
 
 PARAMS:
 PARAMS COMMA VARIABLES |
@@ -86,24 +75,26 @@ EXPR |
 FUNCTIONCALL |
 ;
 
-arithmetic:
-PLUS { $$.nd = mknode(NULL, NULL, "+"); }|
-MINUS{ $$.nd = mknode(NULL, NULL, "-"); }|
-MULT { $$.nd = mknode(NULL, NULL, "*"); }|
-DIVIDE{ $$.nd = mknode(NULL, NULL, "/"); }|
-REM	 { $$.nd = mknode(NULL, NULL, "%"); }|
-BITAND{ $$.nd = mknode(NULL, NULL, "&"); }|
-BITOR{ $$.nd = mknode(NULL, NULL, "|"); }|
-XOR{ $$.nd = mknode(NULL, NULL, "^"); };
 
 EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
-EXPR arithmetic VARIABLES { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
-EXPR arithmetic FUNCTIONCALL { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
 VARIABLES { $$.nd = $1.nd; } |
+EXPR arithmetic FUNCTIONCALL { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
+EXPR arithmetic VARIABLES { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
 FUNCTIONCALL { $$.nd = $1.nd; } |
 IDENTIFIER INCONE { $$.nd = $1.nd; } |
 IDENTIFIER DECONE { $$.nd = $1.nd; };
+
+arithmetic:
+PLUS { $$.nd = mknode(NULL, NULL, "plus"); }|
+MINUS { $$.nd = mknode(NULL, NULL, "minus"); }|
+MULT { $$.nd = mknode(NULL, NULL, "multi"); }|
+DIVIDE { $$.nd = mknode(NULL, NULL, "divide"); }|
+REM	 { $$.nd = mknode(NULL, NULL, "rem"); }|
+BITAND { $$.nd = mknode(NULL, NULL, "bitand"); }|
+BITOR{ $$.nd = mknode(NULL, NULL, "bitor"); }|
+XOR{ $$.nd = mknode(NULL, NULL, "xor"); };
+
 
 BOOLEANS:
 EXPR EQ VARIABLES |
@@ -129,14 +120,14 @@ IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAR
 IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $10.nd, "if-else"); };
 
 FUNCTIONCALL:
-IDENTIFIER LPAREN PARAMS RPAREN ;
+IDENTIFIER LPAREN PARAMS RPAREN |
+MAIN LPAREN PARAMS RPAREN;
 
 FUNCTIONDEF:
 FUNCTION FUNCTIONCALL LCPAREN stment_seq return RCPAREN {$$.nd=mknode($4.nd,NULL,"function");};
 
 return: RETURN { add('K'); } EXPR ';' { $1.nd = mknode(NULL, NULL, "return"); $$.nd = mknode($1.nd, $3.nd, "RETURN"); }
-| { $$.nd = NULL; }
-;
+| { $$.nd = NULL; };
 
 INCREMENT:
 IDENTIFIER ASSIGN EXPR {$1.nd=mknode(NULL,NULL,$1.name);$$.nd=mknode($1.nd,$3.nd,"ITERATOR");}|
@@ -168,7 +159,7 @@ INPUT LPAREN IDENTIFIER RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.n
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; }|
 FUNCTIONCALL SEMICOL { $$.nd=$1.nd; }|
-// FUNCTIONDEF |
+FUNCTIONDEF |
 STOP SEMICOL{ $$.nd=mknode(NULL,NULL,"STOP"); }|
 CONTINUE SEMICOL{ $$.nd=mknode(NULL,NULL,"CONTINUE"); };
 
@@ -248,8 +239,6 @@ void printtree(struct node* tree) {
 
 void printInorder(struct node *tree) {
 	int i;
-	if(tree==NULL)
-	return;
 	if (tree->left) {
 		printInorder(tree->left);
 	}

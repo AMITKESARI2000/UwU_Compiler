@@ -131,7 +131,7 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 {semicol}                       {printf("\nSEMICOL");  return SEMICOL;}
 {space}                         {} 
-\n                              {printf("\n"); countn++;}
+\n|\r                            {printf("\n"); countn++;}
 \t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
 
