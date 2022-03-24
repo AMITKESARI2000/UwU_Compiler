@@ -8,6 +8,7 @@
     using namespace std;
     int a = 0;
     int lines=0;
+    string curr_function="main";
     vector<string> tokens;
     map<string,string> ma;
 %}
@@ -84,7 +85,8 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {function}  {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return FUNCTION;}
 {return}    {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return RETURN;}
 {print}     {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return PRINT;}
-{main}      {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return MAIN;}
+{main}      {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); curr_function = strdup(yytext); 
+                                        cout<<"\nNAME OF FUNCTION: "<<curr_function<<endl; return MAIN;}
 {input}     {printf("\nKEYWORD: %s", yytext); tokens.push_back(strdup(yytext)); return INPUT;}
 
 {comment_start}([^*]|\*+[^*$])*{comment_end}      {printf("\nCOMMENT: %s", yytext);}
@@ -138,6 +140,9 @@ expr        ({identifier}{relop}{identifier}|{identifier})
                                     if(tokens[tokens.size()-2]=="let"){
                                         ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";";
                                         cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl; 
+                                    }else if(tokens[tokens.size()-2]=="function"){
+                                        curr_function = strdup(yytext);
+                                        cout<<"\nNAME OF FUNCTION: "<<curr_function<<endl; 
                                     }
                                     return IDENTIFIER;
                                 }
@@ -146,6 +151,14 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {semicol}                       {printf("\nSEMICOL"); tokens.push_back(strdup(yytext)); return SEMICOL;}
 {space}                         {} 
 \n|\r                              {printf("\n"); lines++;}
+\t                              {printf("\t"); }
+ .                              {printf("\n!!!Illegal Token!!!");}
+
+%%
+
+
+int yywrap(){return 0;}
+
 \t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
 

@@ -1,0 +1,12 @@
+let
+const
+if
+else
+loop
+stop
+continue
+function
+return
+print
+main
+input

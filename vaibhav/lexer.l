@@ -1,12 +1,20 @@
 %{
     
     #include "y.tab.h"
+    #include<map>
+    #include<vector>
+    #include<string>
+    #include<iostream>
 
+    using namespace std;
     int a = 0;
     int lines=0;
-    int countn=0;
-%}
+    vector<string> tokens;
+    map<string,string> ma;
 
+    int countn=0;
+    
+%}
 %option yylineno
 
 let         "let"
@@ -56,9 +64,11 @@ rsparen     "]"
 lcparen     "{"
 rcparen     "}"
 
-comment     "$$"
-semicol     ";"
-space       " "
+comment_start   "$*"
+comment_end     "*$"
+semicol         ";"
+comma           ","
+space           " "
 
 digit       [0-9]
 number      {digit}+
@@ -83,8 +93,9 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {main}      {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));  return MAIN;}
 {input}     {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));  return INPUT;}
 
-{comment}(.|\n)*{comment}                {printf("\nCOMMENT: %s", yytext);}
-\"({identifier}|{number}|{space})*\"     {printf("\nSTRING: %s", yytext);  return STRING;}
+{comment_start}([^*]|\*+[^*$])*{comment_end}                {printf("\nCOMMENT: %s", yytext);}
+\"(\\.|[^"\\])*\"     {printf("\nSTRING: %s", yytext);  return STRING;}
+\'(\\.|[^'\\])*\'     {printf("\nSTRING: %s", yytext);  return STRING;}
 
 {eq}        {printf("\nEQ");strcpy(yylval.nd_obj.name,(yytext));  return EQ;}
 {lt}        {printf("\nLT");strcpy(yylval.nd_obj.name,(yytext));  return LT;}
@@ -127,28 +138,22 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 
 {number}                        {printf("\nNUMBER: %s", yytext); strcpy(yylval.nd_obj.name,(yytext));     return NUMBER;}
 {float}                         {printf("\nFLOAT: %s", yytext); strcpy(yylval.nd_obj.name,(yytext));      return FLOAT;}
-{identifier}                    {printf("\nIDENTIFIER: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));  }
+{identifier}                    {
+                                    printf("\nIDENTIFIER: %s", yytext);
+                                    strcpy(yylval.nd_obj.name,(yytext)); 
+                                    
+                                    return IDENTIFIER;
+                                }
 
+{comma}                         {printf("\COMMA");  return COMMA;}
 {semicol}                       {printf("\nSEMICOL");  return SEMICOL;}
 {space}                         {} 
-\n|\r                            {printf("\n"); countn++;}
+\n|\r                           {printf("\n"); countn++;}
 \t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
+"@@@" 		                    {printf("\nFinished Parsing."); return 0;}
 
 %%
 
-/* Lexical Analysis: Creates new table entries in the table, example like entries about token. */
-// int main (int argc, char *argv[]) {
-//     if(argc > 1){
-//         FILE *fp = fopen(argv[1], "r");
-//         if(fp){
-//             yyin = fp;
-//         }
-//     }
-//     // main function used for running
-//     yylex();
-    
-//     return 0;
-// }
 
 int yywrap(){return 0;}

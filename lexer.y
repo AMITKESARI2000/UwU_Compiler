@@ -1,9 +1,13 @@
 %{
   #include<stdio.h>
   #include<stdlib.h>
-  
+  #include<string>
+  #include<iostream>
+  using namespace std;
 
   extern FILE * yyin;
+  extern int lines;
+  extern string curr_function;
 
   int yylex();
   int yyerror(char *);
@@ -84,7 +88,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RC
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT;
 
 FUNCTIONCALL:
-IDENTIFIER LPAREN PARAMS RPAREN |
+IDENTIFIER LPAREN PARAMS RPAREN  |
 MAIN LPAREN PARAMS RPAREN;
 
 FUNCTIONDEF:
@@ -136,5 +140,6 @@ int main(int argc, char *argv[])
 
 }
 int yyerror(char *s){
-  printf("\n\nError: %s\n", s);
+  cout<<"\n\nError: "<<s<<" in function "<<curr_function<<" in between lines "<<lines<<" - " << lines+2<<endl;
+  // printf("\n\nError: %s in function %s on line number %d\n", s, curr_function ,lines);
 }
