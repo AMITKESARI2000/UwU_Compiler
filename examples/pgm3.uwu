@@ -1,4 +1,4 @@
-$* #add <./examples/pgm5.uwu> *$
+#add <./examples/pgm2.uwu>
 #define pp::print
 #define LET::let
 

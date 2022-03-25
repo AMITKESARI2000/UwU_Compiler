@@ -140,7 +140,8 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     std::string dataIpFilename = argv[1];
-    std::string dataOpFilename = dataIpFilename + "pre";
+    // std::string dataOpFilename = dataIpFilename + "pre";
+    std::string dataOpFilename = "output.uwupre";
 
     std::ifstream fin;
     std::ofstream fout;

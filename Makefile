@@ -19,14 +19,14 @@ YACCFLAGS = -v -d -t
 
 parser: y.tab.c lex.yy.c y.tab.h
 	${CC} ${CCFLAGS} -w y.tab.c lex.yy.c -o parser
+
 lex.yy.c: lexer.l
 	lex lexer.l
 y.tab.c: lexer.y
 	yacc ${YACCFLAGS} lexer.y
 
-preprocessor: preprocessor.cc
+preprocessor: preprocessor.cc parser
 	${CC} ${CCFLAGS} $< -o $@
-
 
 # specifically specifying that these are not file name
 .PHONY: all clean

@@ -287,7 +287,7 @@ void printInorder(struct node *tree,int i) {
 		printInorder(tree->left,i+1);
 	}
 	int space = 15;
-	std::cout<<std::setw(space)<<i<<std::setw(space)<< tree->token <<std::endl;
+	std::cout<<std::setw(space)<< i <<std::setw(space)<< tree->token <<std::endl;
 	
 	// printf("%d  %s, \n",i, tree->token);
 	if (tree->right) {
