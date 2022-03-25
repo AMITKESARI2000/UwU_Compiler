@@ -7,4 +7,3 @@ function main () {
     hello print *$
     print(c);
 }
-@@@

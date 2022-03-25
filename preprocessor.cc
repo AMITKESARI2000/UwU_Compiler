@@ -168,6 +168,7 @@ int main(int argc, char **argv) {
 
     std::cout << "\n-------------------------" << std::endl;
     processSrcLine(fout, SrcCode);
+    fout << "@@@";
     // for (auto line : SrcCode) std::cout << "SC--->" << line << std::endl;
     std::cout << "-------------------------" << std::endl;
 
