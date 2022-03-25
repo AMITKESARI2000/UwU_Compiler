@@ -13,7 +13,7 @@
 #
 
 CC = g++
-CCFLAGS = -std=c++17 -Wall -g
+CCFLAGS = -std=c++17 -g
 YACCFLAGS = -v -d -t
 
 
