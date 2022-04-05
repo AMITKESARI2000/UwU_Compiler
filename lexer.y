@@ -6,6 +6,7 @@
   #include<string>
   #include<iostream>
   #include<iomanip>
+	#include<queue>
   using namespace std;
 
   extern FILE * yyin;
@@ -24,6 +25,8 @@
     
     void printtree(struct node*);
     void printInorder(struct node *,int);
+    void printPreorder(struct node *,int);
+    void printLevelorder(struct node *,int);
     struct node* mknode(struct node *left, struct node *right, char *token);
 
     struct dataType {
@@ -64,7 +67,7 @@
 %right <nd_obj> NEG
 %token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
-%type <nd_obj> program stment_seq ARRAY VARIABLES arithmetic return_rule PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop 
+%type <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic return_rule PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop 
 
 %%
 
@@ -73,8 +76,13 @@ program:  stment_seq {$$.nd=mknode($1.nd,NULL,"Program");head = $$.nd;};
 
 
 stment_seq:
-stment_seq stment_seq{$$.nd=mknode($1.nd,$2.nd,"statements");}|
-LET{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
+STATEMENT stment_seq{$$.nd=mknode($1.nd,$2.nd,"statements");}| 
+STATEMENT
+;
+
+STATEMENT:
+LET{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{
+									int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
 											break;
@@ -82,6 +90,7 @@ LET{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
 										symbolTable[i].data_type=strdup(temp);
 									}
 									 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,$3.name),$6.nd,"declaration");}|
+LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|
 CONST{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
@@ -90,18 +99,17 @@ CONST{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
 									symbolTable[i].data_type=strdup(temp);
 									}
 									 SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,$6.nd,"const_declaration");}|
-LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|
-/*LET ARRAY SEMICOL |*/
+LET ARRAY SEMICOL |
 IDENTIFIER ASSIGN EXPR SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "="); }|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "+="); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "-="); }|
 IDENTIFIER INCONE SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "INCREMENT"); }|
 IDENTIFIER DECONE SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $2.nd = mknode(NULL, NULL, $2.name); $$.nd = mknode($1.nd, $2.nd, "DECREMENT"); }|
-/*ARRAY ASSIGN EXPR SEMICOL |
+ARRAY ASSIGN EXPR SEMICOL |
 ARRAY INCASSIGN VARIABLES SEMICOL |
 ARRAY DECASSIGN VARIABLES SEMICOL |
 ARRAY INCONE SEMICOL |
-ARRAY DECONE SEMICOL |*/
+ARRAY DECONE SEMICOL |
 PRINT LPAREN EXPR RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"print_expr"); }|
 PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"print_functionvalue"); }|
 INPUT LPAREN IDENTIFIER RPAREN SEMICOL { $3.nd = mknode(NULL,NULL,$3.name); $$.nd = mknode(NULL,$3.nd,"input"); }|
@@ -152,9 +160,7 @@ XOR;
 EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
 EXPR arithmetic VARIABLES { $$.nd = mknode($1.nd, $3.nd, $2.name);}|
-EXPR arithmetic FUNCTIONCALL { $$.nd = mknode($1.nd, $3.nd, $2.name); } |
 VARIABLES { $$.nd = $1.nd; } |
-FUNCTIONCALL { $$.nd = $1.nd; } |
 IDENTIFIER INCONE { $$.nd = $1.nd; } |
 IDENTIFIER DECONE { $$.nd = $1.nd; };
 
@@ -177,9 +183,10 @@ NEG BOOLEANS
 ;
 
 CONDITIONAL_STAMENT:
-IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, NULL, "if-else"); }|
-IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $11.nd, "if-else"); }|
-IF  { add('K'); }  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ struct node *iff = mknode($4.nd, $7.nd, $1.name); 	$$.nd = mknode(iff, $10.nd, "if-else"); };
+IF  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF"); 	$$.nd = mknode(iff, NULL, "if-else"); }|
+IF  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN {  add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF"); 	$$.nd = mknode(iff, $10.nd, "if-else"); }|
+IF  LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF"); 	$$.nd = mknode(iff, $9.nd, "if-else"); };
+
 
 FUNCTIONCALL:
 IDENTIFIER LPAREN PARAMS RPAREN {$$.nd=mknode(NULL,NULL,$1.name);}|
@@ -274,12 +281,44 @@ struct node* mknode(struct node *left, struct node *right, char *token) {
 }
 
 void printtree(struct node* tree) {
-	printf("\n\n Inorder traversal of the Parse Tree: \n\n");
+	printf("\n\n Preorder traversal of the Parse Tree: \n\n");
 	int space = 15;
 	std::cout<<std::setw(space)<<"Level"<<std::setw(space)<< "Token" <<std::endl;
 	
-	printInorder(tree, 0);
+	printLevelorder(tree, 0);
 	printf("\n\n");
+}
+
+void printPreorder(struct node *tree,int i) {
+	int space = 15;
+	std::cout<<std::setw(space)<< i <<std::setw(space)<< tree->token <<std::endl;
+	
+	if (tree->left) {
+		printPreorder(tree->left,i+1);
+	}
+	
+	// printf("%d  %s, \n",i, tree->token);
+	if (tree->right) {
+		printPreorder(tree->right,i+1);
+	}
+}
+
+void printLevelorder(struct node *tree, int i){
+	queue<std::pair<struct node *,int>> q;
+	q.push({tree,0});
+
+	while(!q.empty()){
+		int space = 15;
+		std::cout<<std::setw(space)<< q.front().second <<std::setw(space)<< q.front().first->token <<std::endl;
+		if(q.front().first->left){
+			q.push({q.front().first->left, q.front().second + 1});
+		}
+		if(q.front().first->right){
+			q.push({q.front().first->right, q.front().second + 1});
+		}
+		q.pop();
+	}
+
 }
 
 void printInorder(struct node *tree,int i) {
