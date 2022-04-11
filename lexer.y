@@ -83,7 +83,7 @@ STATEMENT
 
 STATEMENT:
 
-LET { insert_type(); } TYPE_DEL { $$.nd = mknode($3.nd,NULL,"type_del"); printf("type_  %s",$3.name);}|
+LET { insert_type(); } TYPE_DEL { $$.nd = mknode($3.nd,NULL,"type_del"); }|
 
 /*LET{ insert_type(); }  IDENTIFIER{ add('V'); } ASSIGN EXPR{
 									int i=0;
@@ -93,10 +93,10 @@ LET { insert_type(); } TYPE_DEL { $$.nd = mknode($3.nd,NULL,"type_del"); printf(
 									if(i<count)
 										symbolTable[i].data_type=strdup(datatype);
 									}
-									 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,$3.name),$6.nd,"declaration");}|*/
+									 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,$3.name),$6.nd,"declaration");}|
 
-/*LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|*/
-/*LET ARRAY SEMICOL |*/
+LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|
+LET ARRAY SEMICOL |*/
 CONST{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
@@ -133,8 +133,8 @@ IDENTIFIER LSPAREN IDENTIFIER RSPAREN |
 IDENTIFIER LSPAREN NUMBER RSPAREN;
 
 TYPE_DEL:
-IDENTIFIER { add('V'); iden_name = strdup($1.name);} END_DEL {$$.nd = mknode($3.nd,NULL,"type_del"); printf("yahape2: %s", $$.name);}|
-ARRAY SEMICOL ;
+IDENTIFIER { add('V'); iden_name = strdup($1.name);} END_DEL {$$.nd = mknode($3.nd,NULL,"type_del"); }|
+ARRAY SEMICOL {add('A'); };
 
 END_DEL:
 ASSIGN EXPR {
@@ -145,7 +145,7 @@ ASSIGN EXPR {
 	}
 	if(i<count)
 		symbolTable[i].data_type=strdup(datatype);
-} SEMICOL {$$.nd=mknode(mknode(NULL,NULL,iden_name),$2.nd,"initialization"); printf("yahape1: %s", $$.name);}|
+} SEMICOL {$$.nd=mknode(mknode(NULL,NULL,iden_name),$2.nd,"initialization"); }|
 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,iden_name),NULL,"declaration");};
 
 
@@ -287,6 +287,12 @@ void add(char c) {
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup("Constant");
 			count++;
+		}else if(c=='A'){
+			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].data_type=strdup("ARRAY");
+			symbolTable[count].line_no=countn;
+			symbolTable[count].type=strdup("Array");
+			count++;
 		}
     }
 }
@@ -318,7 +324,6 @@ void printPreorder(struct node *tree,int i) {
 		printPreorder(tree->left,i+1);
 	}
 	
-	// printf("%d  %s, \n",i, tree->token);
 	if (tree->right) {
 		printPreorder(tree->right,i+1);
 	}
@@ -349,7 +354,6 @@ void printInorder(struct node *tree,int i) {
 	int space = 15;
 	std::cout<<std::setw(space)<< i <<std::setw(space)<< tree->token <<std::endl;
 	
-	// printf("%d  %s, \n",i, tree->token);
 	if (tree->right) {
 		printInorder(tree->right,i+1);
 	}
@@ -362,5 +366,4 @@ void insert_type() {
 int yyerror(char *s){
   std::cout<< "\n\nError: "<< s <<" in function "<< curr_function <<" in between lines "<< lines-1 <<" - " << lines+1 << std::endl;
 
-//   printf("\n\nError: %s\n", s);
 }
