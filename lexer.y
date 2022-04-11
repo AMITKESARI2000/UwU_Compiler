@@ -37,7 +37,7 @@
     } symbolTable[40];
     int count=0;
     int q;
-	char temp [10];
+	char datatype [10];
     char type[10];
     extern int countn;
 
@@ -48,6 +48,7 @@
     };
     struct node *head;
 
+		char* iden_name;
 
 
 %}
@@ -67,39 +68,43 @@
 %right <nd_obj> NEG
 %token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
-%type <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic return_rule PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop 
+%type <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop END_DEL TYPE_DEL 
 
 %%
 
-program:  stment_seq {$$.nd=mknode($1.nd,NULL,"Program");head = $$.nd;};
+program:  stment_seq {$$.nd=mknode($1.nd,NULL,"Program");head = $$.nd; };
 
 
 
 stment_seq:
-STATEMENT stment_seq{$$.nd=mknode($1.nd,$2.nd,"statements");}| 
+STATEMENT stment_seq{$$.nd=mknode($1.nd,$2.nd,"statements"); }| 
 STATEMENT
 ;
 
 STATEMENT:
-LET{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{
+
+LET { insert_type(); } TYPE_DEL { $$.nd = mknode($3.nd,NULL,"type_del"); printf("type_  %s",$3.name);}|
+
+/*LET{ insert_type(); }  IDENTIFIER{ add('V'); } ASSIGN EXPR{
 									int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
 											break;
 									if(i<count)
-										symbolTable[i].data_type=strdup(temp);
+										symbolTable[i].data_type=strdup(datatype);
 									}
-									 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,$3.name),$6.nd,"declaration");}|
-LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|
+									 SEMICOL {$$.nd=mknode(mknode(NULL,NULL,$3.name),$6.nd,"declaration");}|*/
+
+/*LET{ insert_type(); } IDENTIFIER{ add('V'); } SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,NULL,"initialization");}|*/
+/*LET ARRAY SEMICOL |*/
 CONST{ insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
 											break;
 									if(i<count)
-									symbolTable[i].data_type=strdup(temp);
+									symbolTable[i].data_type=strdup(datatype);
 									}
 									 SEMICOL {$3.nd=mknode(NULL,NULL,$3.name);$$.nd=mknode($3.nd,$6.nd,"const_declaration");}|
-LET ARRAY SEMICOL |
 IDENTIFIER ASSIGN EXPR SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "="); }|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "+="); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { $1.nd = mknode(NULL, NULL, $1.name); $$.nd = mknode($1.nd, $3.nd, "-="); }|
@@ -127,6 +132,22 @@ ARRAY LSPAREN NUMBER RSPAREN |
 IDENTIFIER LSPAREN IDENTIFIER RSPAREN |
 IDENTIFIER LSPAREN NUMBER RSPAREN;
 
+TYPE_DEL:
+IDENTIFIER { add('V'); iden_name = strdup($1.name);} END_DEL {$$.nd = mknode($3.nd,NULL,"type_del"); printf("yahape2: %s", $$.name);}|
+ARRAY SEMICOL ;
+
+END_DEL:
+ASSIGN EXPR {
+	int i=0;
+	for(i=0;i<count;i++){
+		if(strcmp(symbolTable[i].id_name,iden_name)==0)
+			break;
+	}
+	if(i<count)
+		symbolTable[i].data_type=strdup(datatype);
+} SEMICOL {$$.nd=mknode(mknode(NULL,NULL,iden_name),$2.nd,"initialization"); printf("yahape1: %s", $$.name);}|
+SEMICOL {$$.nd=mknode(mknode(NULL,NULL,iden_name),NULL,"declaration");};
+
 
 VARIABLES: 
 IDENTIFIER {$$.nd = mknode(NULL, NULL, $1.name); int i=0;
@@ -134,11 +155,11 @@ IDENTIFIER {$$.nd = mknode(NULL, NULL, $1.name); int i=0;
 										if(strcmp(symbolTable[i].id_name,$1.name)==0)
 											break;
 									if(i<count)
-										strcpy(temp,symbolTable[i].data_type);
+										strcpy(datatype,symbolTable[i].data_type);
 									}|
-NUMBER { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(temp,"INT");}| 
-STRING { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(temp,"STRING");}| 
-FLOAT { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(temp,"FLOAT");}| 
+NUMBER { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(datatype,"INT");}| 
+STRING { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(datatype,"STRING");}| 
+FLOAT { add('C'); $$.nd = mknode(NULL, NULL, $1.name); strcpy(datatype,"FLOAT");}| 
 ARRAY; 
 
 PARAMS:
@@ -223,14 +244,14 @@ int main(int argc, char *argv[])
   std::cout<<std::endl;
   std::cout<<std::setw(space)<<"IDENTIFIER"<<std::setw(space)<<"TYPE"<<std::setw(space)<<"let/const"<<std::setw(space)<<"line No"<<std::endl;
 	for(i=0; i<count; i++) {
-		std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
-		// printf("%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
+		// std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
+		printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
 	}
+	printtree(head);
 	for(i=0;i<count;i++){
 		free(symbolTable[i].id_name);
 		free(symbolTable[i].type);
 	}
-	printtree(head);
 }
 
 int search(char *type) {
