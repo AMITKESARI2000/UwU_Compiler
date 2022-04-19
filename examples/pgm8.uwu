@@ -1,7 +1,4 @@
 function main(){
-  let day;
-  input(day);
-
   if(day == 1){
     print("Monday");
   }else if(day == 2){
@@ -20,4 +17,4 @@ function main(){
     print("Invalid Input");
   }
 
-}
+}@@@
