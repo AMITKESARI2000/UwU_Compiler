@@ -6,5 +6,8 @@ function main() {
     if(i < 10 && x > 20) {
         i += 2;
     }
+    else{
+        i++;
+    }
     $* ending loop with some test chars: ** @#$%^&*.|\! *$
-}
+}@@@
