@@ -6,4 +6,5 @@ function main () {
     $* hey  
     hello print *$
     print(c);
+    a++;
 }@@@

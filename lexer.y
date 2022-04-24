@@ -29,6 +29,7 @@
     void printPreorder(struct node *,int);
     void printLevelorder(struct node *,int);
     struct node* mknode(struct node *left, struct node *right, char *token, string code);
+	struct node* mknode(struct node *left, struct node *right, char *token, string code,int Label);
 
     struct dataType {
         char *id_name;
@@ -47,14 +48,15 @@
 		struct node *right; 
 		char *token; 
 		string code;
+		int trueLabel = -1;
+		int falseLabel= -1;
     };
     struct node *head;
 
 	char* iden_name;
 	string ircode;
 	int irLabelCount = 0;
-
-
+	int irtempCount = 0;
 %}
 
 %union { 
@@ -79,12 +81,12 @@ program:  stment_seq {ircode = $1.nd->code; $$.nd=mknode($1.nd, NULL, "Program",
 
 
 stment_seq:
-STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode );  }| 
-STATEMENT {$$.nd = $1.nd;}
+STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0; }| 
+STATEMENT {$$.nd = $1.nd;irtempCount = 0;}
 ;
 
 STATEMENT:
-LET { insert_type(); } TYPE_DECL { ircode = " " + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Let Statement", ircode); }|
+LET { insert_type(); } TYPE_DECL { ircode = " _i " + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Let Statement", ircode); }|
 CONST { insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{
 									int i=0;
 									for(i=0;i<count;i++)
@@ -93,7 +95,7 @@ CONST { insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{
 									if(i<count)
 									symbolTable[i].data_type=strdup(datatype);
 									}
-									SEMICOL {ircode = " " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + $6.nd->code; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
+									SEMICOL {ircode = " _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + $6.nd->code; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
 IDENTIFIER ASSIGN EXPR SEMICOL { ircode = string($1.name) + " = " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); }|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " += " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " -= " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
@@ -172,7 +174,11 @@ XOR   {$$.nd = mknode(NULL, NULL, "XOR", "^");};
 
 EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
-EXPR arithmetic VARIABLES { ircode = "(" + $1.nd->code + $2.nd->code + ")" + $3.nd->code; $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
+EXPR arithmetic VARIABLES { 
+							ircode =  $1.nd->code + $2.nd->code  + $3.nd->code;
+							 $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);
+							 
+							 }|
 EXPR arithmetic FUNCTIONCALL { ircode = "(" + $1.nd->code + $2.nd->code + ")" + $3.nd->code; $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
 VARIABLES { $$.nd = $1.nd;} |
 IDENTIFIER INCONE { $$.nd = $1.nd; } |
@@ -189,29 +195,59 @@ EXPR GE VARIABLES {ircode = $1.nd->code + " >= " + $3.nd->code + "\n"; $$.nd = m
 
 CONDITION:
 LPAREN CONDITION RPAREN {$$.nd = $2.nd;} |
-CONDITION AND BOOLEANS {ircode = $1.nd->code + "&&" + $3.nd->code; $2.nd = mknode(NULL, NULL, "AND", "&&"); $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
-CONDITION OR BOOLEANS {ircode = $1.nd->code + "||" + $3.nd->code; $2.nd = mknode(NULL, NULL, "OR", "||"); $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
+CONDITION AND BOOLEANS {
+						int Label = irLabelCount++;
+						ircode = $1.nd->code +"GOTO L"+to_string(Label)+ "\n IF_FALSE" + $3.nd->code; 
+						$2.nd = mknode(NULL, NULL, "AND", "&&"); 
+						$$.nd = mknode($1.nd, $3.nd, $2.name, ircode,Label);
+						}|
+CONDITION OR BOOLEANS {
+						int Label = irLabelCount++;
+						ircode = $1.nd->code +"GOTO L"+to_string(Label)+"\n L"+to_string(Label)+ ": IF_FALSE" + $3.nd->code;
+					 $2.nd = mknode(NULL, NULL, "OR", "||");
+					  $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
 CONDITION XOR BOOLEANS {ircode = $1.nd->code + "^" + $3.nd->code; $2.nd = mknode(NULL, NULL, "XOR", "^"); $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
 BOOLEANS { $$.nd = $1.nd;}|
 NEG BOOLEANS {ircode = "!" + $2.nd->code; $1.nd = mknode(NULL, NULL, "NEG", "!"); $$.nd = mknode(NULL, $2.nd, $1.name, ircode);}
 ;
 
 CONDITIONAL_STAMENT:
-IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ; ircode = "L" + to_string(irLabelCount++) + ": IF_FALSE " + $3.nd->code + "GOTO L"; iflastindex=irLabelCount;ircode+= to_string(irLabelCount++) + "\n";  add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); ircode = ircode + $6.nd->code + "L" + to_string(iflastindex) +":\n"; $$.nd = mknode(iff, NULL, "if-else", ircode); }|
+IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ; 
+					ircode = "IF_FALSE " + $3.nd->code + "GOTO L"; 
+					if($3.nd->trueLabel==-1)
+					iflastindex=irLabelCount++;
+					else
+					iflastindex=$3.nd->trueLabel;
+					ircode+= to_string(irLabelCount++) + "\n";  
+					add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
+					ircode = ircode + $6.nd->code + "L" + to_string(iflastindex) +":\n"; 
+					$$.nd = mknode(iff, NULL, "if-else", ircode,iflastindex);
+					 }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { int iflastindex ,elseend;
 										  ircode = "IF_FALSE " + $3.nd->code + " GOTO "+"L";
-										  iflastindex=irLabelCount++, elseend=irLabelCount++;
+										  if($3.nd->trueLabel==-1)
+											iflastindex=irLabelCount++;
+										  else
+											iflastindex=$3.nd->trueLabel;
+										  elseend=irLabelCount++;
 										  ircode += to_string(iflastindex)+" \n";  add('K'); 
 										  struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
 										  ircode = ircode + $6.nd->code + "\n GOTO L"+to_string(elseend)+"\n L"+to_string(iflastindex)+": " + $10.nd->code+"\n L"+to_string(elseend) +":";
-										   $$.nd = mknode(iff, $10.nd, "if-else", ircode); }|
+										   $$.nd = mknode(iff, $10.nd, "if-else", ircode,elseend);
+										    }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ int iflastindex ,elseend;
-										iflastindex = irLabelCount++,elseend=irLabelCount++;
+										if($3.nd->trueLabel==-1)
+											iflastindex=irLabelCount++;
+										else
+											iflastindex=$3.nd->trueLabel;
+										if($9.nd->trueLabel!=-1)
+										elseend = $9.nd->trueLabel;
+										else
+										elseend = irLabelCount++;
 										ircode = "IF_FALSE " + $3.nd->code + " GOTO "+"L"+to_string(iflastindex)+" \n" + $6.nd->code + "\n" + "goto L" + to_string(elseend)+"\n";
 										add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode);
 										ircode = ircode +"L"+to_string(iflastindex)+ ": " + $9.nd->code ;
-										ircode+="L"+to_string(elseend)+":";
-										$$.nd = mknode(iff, $9.nd, "if-else-if", ircode);
+										$$.nd = mknode(iff, $9.nd, "if-else-if", ircode,elseend);
 										};
 
 
@@ -220,7 +256,7 @@ IDENTIFIER LPAREN PARAMS RPAREN {ircode =  "L" + string($1.name)+": "; $$.nd=mkn
 MAIN LPAREN PARAMS RPAREN{ircode = "Lmain: "; $$.nd=mknode(NULL,NULL,$1.name, ircode);};
 
 FUNCTIONDEF:
-FUNCTION FUNCTIONCALL LCPAREN stment_seq RCPAREN {ircode = $2.nd->code + $4.nd->code;  $$.nd=mknode($4.nd, NULL, "Function", ircode); };
+FUNCTION FUNCTIONCALL LCPAREN stment_seq RCPAREN {ircode = $2.nd->code + $4.nd->code + "return back \n";  $$.nd=mknode($4.nd, NULL, "Function", ircode); };
 
 INCREMENT:
 IDENTIFIER ASSIGN EXPR {ircode = string($1.name) + " += " + $3.nd->code + "\n"; $1.nd=mknode(NULL,NULL,$1.name, $1.name);$$.nd=mknode($1.nd,$3.nd,"ITERATOR", ircode);}|
@@ -319,6 +355,20 @@ struct node* mknode(struct node *left, struct node *right, char *token, string c
 	newnode->right = right;
 	newnode->token = newstr;
 	newnode->code = code;
+	return(newnode);
+}
+
+struct node* mknode(struct node *left, struct node *right, char *token, string code,int Label) {	
+	// struct node *newnode = (struct node *)malloc(sizeof(struct node));
+	struct node *newnode = new node;
+	char *newstr = (char *)malloc(strlen(token)+1);
+	// TODO: change token to string type
+	strcpy(newstr, token);
+	newnode->left = left;
+	newnode->right = right;
+	newnode->token = newstr;
+	newnode->code = code;
+	newnode->trueLabel = Label;
 	return(newnode);
 }
 

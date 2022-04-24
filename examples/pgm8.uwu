@@ -1,8 +1,6 @@
 function main(){
-  if(day == 1){
+  if(day == 1 || day<=2){
     print("Monday");
-  }else if(day == 2){
-    print("Tuesday");
   }else if(day == 3){
     print("Wednesday");
   }else if(day == 4){

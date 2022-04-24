@@ -6,9 +6,10 @@ function main(){
       print("one");
     }else if(i&2 < 0){
       print("two");
-    }else if(i+1<10 && (19%6 ==0) || 5+3>5 ^ 10==0 && n>10){
+    }else if(i+1<10 && 19%6 ==0){
       print("three");
+      stop;
     }
   }(i++)
 
-}
+}@@@
