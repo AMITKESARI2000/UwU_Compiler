@@ -96,7 +96,7 @@ expr        ({identifier}{relop}{identifier}|{identifier})
                                         cout << "\nNAME OF FUNCTION: " << curr_function<< endl; return MAIN;}
 {input}     {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return INPUT;}
 
-{comment_start}([^*]|\*+[^*$])*{comment_end}                {printf("\nCOMMENT: %s", yytext);}
+{comment_start}([^*]|\*+[^*$])*{comment_end}                {printf("\nCOMMENT: %s", yytext); return NEXTLINE;}
 \"(\\.|[^"\\])*\"     {printf("\nSTRING: %s", yytext);tokens.push_back(strdup(yytext));  return STRING;}
 \'(\\.|[^'\\])*\'     {printf("\nSTRING: %s", yytext);tokens.push_back(strdup(yytext));  return STRING;}
 
@@ -158,7 +158,8 @@ expr        ({identifier}{relop}{identifier}|{identifier})
 {comma}                         {printf("\COMMA");  tokens.push_back(strdup(yytext)); return COMMA;}
 {semicol}                       {printf("\nSEMICOL");tokens.push_back(strdup(yytext));   return SEMICOL;}
 {space}                         {} 
-\n|\r                           {printf("\n"); countn++; lines++;}
+\n                              {printf("\n"); return NEXTLINE;}
+\r                              {printf("\n");}
 \t                              {printf("\t"); }
  .                              {printf("\n!!!Illegal Token!!!");}
 "@@@" 		                    {printf("\nFinished Parsing."); return 0;}

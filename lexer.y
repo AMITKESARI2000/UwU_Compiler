@@ -16,6 +16,8 @@
   extern int lines;
   extern string curr_function;
 
+	int line_stmt = 1;
+
 		int yylex();
 		int yyerror(char *);
 		
@@ -79,7 +81,7 @@
 %left  <nd_obj> MULT DIVIDE PLUS MINUS 
 %right <nd_obj> NEG
 %token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
-%token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA
+%token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA NEXTLINE
 %type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
 
 %%
@@ -88,9 +90,10 @@ program:  stment_seq {ircode = $1.nd->code; $$.nd=mknode($1.nd, NULL, "Program",
 
 
 stment_seq:
-STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0; }| 
-STATEMENT {$$.nd = $1.nd; irtempCount = 0;}|
-error SEMICOL {cout << "@@@Error on Line:: " << lines << endl;} stment_seq
+STATEMENT  stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0;}| 
+STATEMENT {$$.nd = $1.nd; irtempCount = 0; }|
+error SEMICOL {std::cout<< "\n\n### Error: "<< "syntax error" <<" in function "<< curr_function <<" in line "<< line_stmt << std::endl; } stment_seq |
+NEXTLINE {line_stmt++;} stment_seq
 ;
 
 STATEMENT:
@@ -552,6 +555,6 @@ void writeIrToFile(string ircode){
 }
 
 int yyerror(char *s){
-  std::cout<< "\n\nError: "<< s <<" in function "<< curr_function <<" in between lines "<< lines-1 <<" - " << lines+1 << std::endl;
+  //std::cout<< "\n\nError: "<< s <<" in function "<< curr_function <<" in line "<< line_stmt << std::endl;
 
 }
