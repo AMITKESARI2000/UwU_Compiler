@@ -9,6 +9,7 @@ preprocessor
 lex.yy.c
 y.*
 *.uwupre
+*.uwuir
 
 # Prerequisites
 *.d
