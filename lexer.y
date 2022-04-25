@@ -84,7 +84,8 @@ program:  stment_seq {ircode = $1.nd->code; $$.nd=mknode($1.nd, NULL, "Program",
 
 stment_seq:
 STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0; }| 
-STATEMENT {$$.nd = $1.nd;irtempCount = 0;}
+STATEMENT {$$.nd = $1.nd;irtempCount = 0;}|
+error SEMICOL {cout<<"Error on Line:: "<<lines<<endl;} stment_seq
 ;
 
 STATEMENT:
@@ -489,7 +490,7 @@ string findArrIndex(string code){
 	}
 	for(int i=0;i<main_dim.size();i++){
 		if(main_dim[i]<=array_dim[i]){
-			
+
 		}
 	}
 
