@@ -19,10 +19,12 @@
 		
 		int yywrap();
 		void add(char);
+		void add_arr(char,string);
 		void insert_type();
 		void insert();
 		int search(char *);
 		char* join(char *, char*);
+		vector<int> get_dim(string);
     
     void printtree(struct node*);
     void printInorder(struct node *,int);
@@ -30,7 +32,7 @@
     void printLevelorder(struct node *,int);
     struct node* mknode(struct node *left, struct node *right, char *token, string code);
 	struct node* mknode(struct node *left, struct node *right, char *token, string code,int Label);
-
+		string findArrIndex(string);
     struct dataType {
         char *id_name;
         char *data_type;
@@ -101,7 +103,7 @@ IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " += " + $3.
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " -= " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
 IDENTIFIER INCONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "INCREMENT", ircode); }|
 IDENTIFIER DECONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "DECREMENT", ircode); }|
-ARRAY ASSIGN EXPR SEMICOL |
+ARRAY ASSIGN EXPR SEMICOL {cout << "hi arrayy " << findArrIndex($1.nd->code) <<endl; ircode =  + " = " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); } |
 ARRAY INCASSIGN VARIABLES SEMICOL |
 ARRAY DECASSIGN VARIABLES SEMICOL |
 ARRAY INCONE SEMICOL |
@@ -118,14 +120,29 @@ STOP SEMICOL{ ircode = "goto N2LINE\n"; $$.nd=mknode(NULL,NULL,"STOP", ircode); 
 CONTINUE SEMICOL{ ircode = "goto NLINE"; $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); };
 
 ARRAY:
-ARRAY LSPAREN IDENTIFIER RSPAREN |
-ARRAY LSPAREN NUMBER RSPAREN |
-IDENTIFIER LSPAREN IDENTIFIER RSPAREN |
-IDENTIFIER LSPAREN NUMBER RSPAREN;
+ARRAY LSPAREN NUMBER RSPAREN {
+						ircode = $1.nd->code + "x" + $3.name;
+						cout<<"array nigga:"<<ircode<<endl;
+						$$.nd = mknode(NULL,NULL,"Array", ircode);
+}|
+ARRAY LSPAREN IDENTIFIER RSPAREN {
+						ircode = $1.nd->code + "x" + $3.name;
+						cout<<"array nigga:"<<ircode<<endl;
+						$$.nd = mknode(NULL,NULL,"Array", ircode);
+}|
+IDENTIFIER LSPAREN NUMBER RSPAREN {
+						ircode = string($1.name) + " : " + string($3.name);
+						cout<<"array nigga:"<<ircode<<endl;
+						$$.nd = mknode(NULL,NULL,"Array", ircode);
+}|
+IDENTIFIER LSPAREN IDENTIFIER RSPAREN {
+						ircode = string($1.name) + " : " + string($3.name);
+						$$.nd = mknode(NULL,NULL,"Array", ircode);
+};
 
 TYPE_DECL:
 IDENTIFIER { add('V'); iden_name = strdup($1.name);} END_DECL {ircode = iden_name + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Type_decl", ircode); }|
-ARRAY SEMICOL {add('A'); };
+ARRAY SEMICOL {add_arr('A',$1.nd->code); ircode = "Assign " +  $1.nd->code +"\n"; $$.nd = mknode($1.nd,NULL,"Type_decl", ircode); };
 
 END_DECL:
 ASSIGN EXPR {
@@ -345,6 +362,19 @@ void add(char c) {
     }
 }
 
+void add_arr(char c, string sizeArr){
+	q=search(yytext);
+	if(q==0){
+	if(c=='A'){
+			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].data_type=strdup(sizeArr.c_str());
+			symbolTable[count].line_no=countn;
+			symbolTable[count].type=strdup("Array");
+			count++;
+		}
+	}
+}
+
 struct node* mknode(struct node *left, struct node *right, char *token, string code) {	
 	// struct node *newnode = (struct node *)malloc(sizeof(struct node));
 	struct node *newnode = new node;
@@ -426,6 +456,63 @@ void printInorder(struct node *tree,int i) {
 
 void insert_type() {
 	strcpy(type, yytext);
+}
+
+string findArrIndex(string code){
+	string delimiter = " : ";
+	int name_idx = code.find(delimiter);
+	string arrName =  code.substr(0, name_idx);
+	vector<int> array_dim = get_dim(code);
+	vector<int> main_dim;
+	// name_idx += 3;
+	// vector<int> array_dim;
+	// string dim="";
+
+	// while(name_idx < code.size()){
+	// 	if(code[name_idx]=='x'){
+	// 		array_dim.push_back(stoi(dim));
+	// 		dim = "";
+	// 	}else{
+	// 		dim += code[name_idx];
+	// 	}
+	// 	name_idx ++;
+	// }
+	// array_dim.push_back(stoi(dim));
+
+	int i=0;
+
+	for(i=0; i < count; i++){
+		if(string(symbolTable[i].data_type).find(arrName + " :") != std::string::npos){
+			main_dim = get_dim(string(symbolTable[i].data_type));
+			
+		}
+	}
+	for(int i=0;i<main_dim.size();i++){
+		if(main_dim[i]<=array_dim[i]){
+			
+		}
+	}
+
+	return arrName;
+}
+
+vector<int> get_dim(string code){
+	int name_idx = code.find(" : ");
+	name_idx += 3;
+	vector<int> array_dim;
+	string dim="";
+
+	while(name_idx < code.size()){
+		if(code[name_idx]=='x'){
+			array_dim.push_back(stoi(dim));
+			dim = "";
+		}else{
+			dim += code[name_idx];
+		}
+		name_idx ++;
+	}
+	array_dim.push_back(stoi(dim));
+	return array_dim;
 }
 
 int yyerror(char *s){
