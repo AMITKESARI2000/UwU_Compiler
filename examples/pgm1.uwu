@@ -1,5 +1,5 @@
 function main () {
-    let arr[10][2][20];
+    let ann[10][2][20];
     arr[2][1][10] = 10+11;
     let a = 10;
     let b = "20";
