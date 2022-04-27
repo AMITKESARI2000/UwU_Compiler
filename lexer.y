@@ -109,7 +109,6 @@ STATEMENT stment_seq {
 					   }| 
 STATEMENT {$$.nd = $1.nd; irtempCount = 0;}|
 error SEMICOL {
-				cout << "@@@Error on Line:: " << lines << endl; 
 				error_lines.push_back(lines-1);
 } stment_seq
 ;
@@ -222,7 +221,7 @@ ARRAY;
 PARAMS:
 PARAMS COMMA VARIABLES |
 EXPR |
-FUNCTIONCALL |
+FUNCTIONCALL |{}
 ;
 
 arithmetic:

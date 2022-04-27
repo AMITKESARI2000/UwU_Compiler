@@ -12,7 +12,7 @@ function main () {
     hello p
     
     rint *$
-    print(c);
+    print(fac());
     print(/c);
     a++;
 }@@@ 
