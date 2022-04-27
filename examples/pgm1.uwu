@@ -3,7 +3,7 @@ function main () {
     arr[2][1][10] = 10+11;
     let a = 10;
     let b = "20";
-    let c = a + b;
+    let c = a + b + 1;
     let d = "amit kesari";
     $* hey  
     hello print *$

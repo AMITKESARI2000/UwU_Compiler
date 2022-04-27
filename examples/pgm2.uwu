@@ -3,7 +3,7 @@ function main() {
     let ff = 10.0;
     let i = 5;
     $* something else *$
-    if(i < 10 && x > 20) {
+    if(i < 10 && x == 20) {
         i += 2;
     }
     else{
