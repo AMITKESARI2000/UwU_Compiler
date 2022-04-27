@@ -21,7 +21,7 @@
 		int yyerror(char *);
 		
 		int yywrap();
-		void add(char);
+		void add(char , char*);
 		void add_arr(char,string);
 		void insert_type();
 		void insert();
@@ -51,6 +51,8 @@
     extern int countn;
 	string curr_arr;
 
+	vector<int>error_lines;
+
     struct node { 
 		struct node *left; 
 		struct node *right; 
@@ -65,6 +67,8 @@
 	string ircode;
 	int irLabelCount = 0;
 	int irtempCount = 0;
+	int ender=-1;
+	int beginer=-1;
 %}
 
 %union { 
@@ -79,24 +83,39 @@
 %token <nd_obj> LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN 
 %left  <nd_obj> MULT DIVIDE PLUS MINUS 
 %right <nd_obj> NEG
-%token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
+%token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN error
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA 
 %type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
 
 %%
 
-program:  stment_seq {ircode = $1.nd->code; $$.nd=mknode($1.nd, NULL, "Program", ircode); head = $$.nd; writeIrToFile(ircode); cout << "\n\nGot my ircode@@@ \n" << $$.nd->code << endl; };
-
+program:  stment_seq {
+					
+					ircode = $1.nd->code;
+					 $$.nd=mknode($1.nd, NULL, "Program", ircode);
+					  head = $$.nd; writeIrToFile(ircode);
+					   cout << "\n\nGot my ircode@@@ \n" << $$.nd->code << endl;
+					    };
 
 stment_seq:
-STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0; }| 
+STATEMENT stment_seq { 
+					ircode = "";
+					if($1.nd == 0!=true)
+					ircode = $1.nd->code ;
+					if($2.nd == 0!=true)
+					ircode+= $2.nd->code;
+					 $$.nd=mknode($1.nd, $2.nd,"Statements", ircode );
+					  irtempCount = 0;
+					   }| 
 STATEMENT {$$.nd = $1.nd; irtempCount = 0;}|
-error SEMICOL {cout << "@@@Error on Line:: " << lines << endl;} stment_seq
+error SEMICOL {
+				error_lines.push_back(lines-1);
+} stment_seq
 ;
 
 STATEMENT:
 LET { insert_type(); } TYPE_DECL { ircode = " _i " + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Let Statement", ircode); }|
-CONST { insert_type(); } IDENTIFIER{ add('V'); } ASSIGN EXPR{
+CONST { insert_type(); } IDENTIFIER{ add('V',$3.name); } ASSIGN EXPR {
 									int i=0;
 									for(i=0;i<count;i++)
 										if(strcmp(symbolTable[i].id_name,$3.name)==0)
@@ -120,11 +139,21 @@ PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = "print "+ $3.nd->code +"\n";
 INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "syscall input \n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; }|
-RETURN {add('K'); } EXPR SEMICOL{ ircode = " return "; $1.nd = mknode(NULL, NULL, "Return", ircode); ircode = ircode + $3.nd->code + " GOTO NLINE\n"; $$.nd = mknode($1.nd, $3.nd, "RETURN", ircode); }|
+RETURN {add('K',$1.name); } EXPR SEMICOL{ ircode = " return "; $1.nd = mknode(NULL, NULL, "Return", ircode); ircode = ircode + $3.nd->code + " GOTO NLINE\n"; $$.nd = mknode($1.nd, $3.nd, "RETURN", ircode); }|
 FUNCTIONCALL SEMICOL { $$.nd=$1.nd; ircode = "GOTO " + $1.nd->code.substr(0, $1.nd->code.size()-2);  $1.nd->code = ircode; }|
 FUNCTIONDEF |
-STOP SEMICOL{ ircode = "GOTO N2LINE\n"; $$.nd=mknode(NULL,NULL,"STOP", ircode); }|
-CONTINUE SEMICOL{ ircode = "GOTO NLINE"; $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); };
+STOP SEMICOL{ 
+				 if(ender==-1)
+				 ender = irLabelCount++;
+				 ircode = "GOTO L"+to_string(ender);
+				 $$.nd=mknode(NULL,NULL,"STOP", ircode);
+				  }|
+CONTINUE SEMICOL{ 
+					if(beginer==-1)
+					beginer = irLabelCount++;
+					ircode = "GOTO L"+to_string(beginer);
+					 $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); 
+					 };
 
 ARRAY:
 ARRAY LSPAREN NUMBER RSPAREN {
@@ -145,14 +174,16 @@ IDENTIFIER LSPAREN IDENTIFIER RSPAREN {
 };
 
 TYPE_DECL:
-IDENTIFIER { add('V'); iden_name = strdup($1.name);} END_DECL {ircode = iden_name + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Type_decl", ircode); }|
+IDENTIFIER { add('V',strdup($1.name)); iden_name = strdup($1.name);} END_DECL {ircode = iden_name + $3.nd->code; $$.nd = mknode($3.nd,NULL,"Type_decl", ircode); }|
 ARRAY SEMICOL { add_arr('A',$1.nd->code); 
 				string delimiter = " : ";
 				int name_idx = $1.nd->code.find(delimiter);
 				string arrName =  $1.nd->code.substr(0, name_idx);
 				vector<string> array_dim  = get_dim($1.nd->code);
 				int dimsum = 1;
-				for(string a : array_dim) dimsum *= stoi(a);
+				for(string a : array_dim){
+					 dimsum *= stoi(a);
+				}
 				ircode = arrName + "["+to_string(dimsum)+"]\n";
 				// ircode = $1.nd->code + "\n"; 
 				$$.nd = mknode($1.nd,NULL,"Type_decl", ircode); 
@@ -182,15 +213,15 @@ IDENTIFIER {ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, 
 										strcpy(datatype,symbolTable[i].data_type);
 										
 									}|
-STRING { add('C'); ircode = " " + string(yytext); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"STRING"); }| 
-NUMBER { add('C'); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"INT");}| 
-FLOAT  { add('C'); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"FLOAT");}| 
+STRING { add('C',strdup(yytext)); ircode = " " + string(yytext); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"STRING"); }| 
+NUMBER { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"INT");}| 
+FLOAT  { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"FLOAT");}| 
 ARRAY; 
 
 PARAMS:
 PARAMS COMMA VARIABLES |
 EXPR |
-FUNCTIONCALL |
+FUNCTIONCALL |{}
 ;
 
 arithmetic:
@@ -258,8 +289,8 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ;
 					else
 						iflastindex=$3.nd->trueLabel;
 					ircode += to_string(irLabelCount++) + "\n";  
-					add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-					ircode = ircode + $6.nd->code + "Label_" + to_string(iflastindex) +":\n"; 
+					add('K',$1.name); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
+					ircode = ircode + $6.nd->code + "L" + to_string(iflastindex) +":\n"; 
 					$$.nd = mknode(iff, NULL, "if-else", ircode,iflastindex);
 					 }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { 
@@ -270,7 +301,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RC
 										else
 										    iflastindex=$3.nd->trueLabel;
 										elseend = irLabelCount++;
-										ircode += to_string(iflastindex) + " \n"; add('K'); 
+										ircode += to_string(iflastindex) + " \n"; add('K',$1.name); 
 										struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
 										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":";
 										$$.nd = mknode(iff, $10.nd, "if-else", ircode,elseend);
@@ -285,9 +316,9 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{
 											elseend = $9.nd->trueLabel;
 										else
 											elseend = irLabelCount++;
-										ircode = "IF_FALSE " + $3.nd->code + " GOTO " + "Label_" + to_string(iflastindex) + " \n" + $6.nd->code + "\n" + "GOTO Label_" + to_string(elseend)+"\n";
-										add('K'); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode);
-										ircode = ircode +"Label_"+to_string(iflastindex)+ ": " + $9.nd->code ;
+										ircode = "IF_FALSE " + $3.nd->code + " GOTO " + "L" + to_string(iflastindex) + " \n" + $6.nd->code + "\n" + "GOTO L" + to_string(elseend)+"\n";
+										add('K',$1.name); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode);
+										ircode = ircode +"L"+to_string(iflastindex)+ ": " + $9.nd->code ;
 										$$.nd = mknode(iff, $9.nd, "if-else-if", ircode,elseend);
 										};
 
@@ -305,13 +336,18 @@ IDENTIFIER INCONE { ircode = string($1.name) + " = " + string($1.name) + " + 1" 
 IDENTIFIER DECONE { ircode = string($1.name) + " = " + string($1.name) + " - 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, $2.name); $$.nd = mknode($1.nd, $2.nd, "ITERATOR", ircode); };
 
 Loop:
-LOOP { add('K'); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { 
+LOOP { add('K',$1.name); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { 
 											int loopstart,loopend;
-											loopstart=irLabelCount++,loopend=irLabelCount++;
-											ircode = "Label_"+to_string(loopstart)+": "+"IF_FALSE " + $4.nd->code +"GOTO Label_"+to_string(loopend)+"\n";
+											if(beginer==-1)
+											beginer = irLabelCount++;
+											if(ender==-1)
+											ender = irLabelCount++;
+											loopstart=beginer,loopend=ender;
+											ircode = "L"+to_string(loopstart)+": "+"IF_FALSE " + $4.nd->code +"GOTO L"+to_string(loopend)+"\n";
 											struct node *temp = mknode($4.nd, $10.nd, "CONDITION", ircode); 
 											ircode = ircode + $7.nd->code+ $10.nd->code + "\n GOTO Label_"+to_string(loopstart)+"\n Label_"+to_string(loopend)+": \n"; 
 											$$.nd = mknode(temp, $7.nd, $1.name, ircode);
+											ender = beginer =-1;
 											}; 
 
 
@@ -328,19 +364,38 @@ int main(int argc, char *argv[])
   yyparse();
   printf("\n");
   int i=0;
-  int space =15;
+  int space =20;
+
   std::cout<<std::setw(space*3)<<"SYMBOL TABLE"<<std::endl;
   std::cout<<std::endl;
   std::cout<<std::setw(space)<<"IDENTIFIER"<<std::setw(space)<<"TYPE"<<std::setw(space)<<"let/const"<<std::setw(space)<<"line No"<<std::endl;
 	for(i=0; i<count; i++) {
-		// std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
-		printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
+		std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
+		// printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
 	}
 	printtree(head);
 	for(i=0;i<count;i++){
 		free(symbolTable[i].id_name);
 		free(symbolTable[i].type);
 	}
+	cout<<"Found Error in folloing places "<<endl;
+	ifstream personal_filein(argv[1]);
+    string line="";
+	int ip=0;
+	int j=0;
+    while ( getline ( personal_filein , line) )
+    {
+		if(j>=error_lines.size())
+		break;
+		if(ip==error_lines[j])
+		{
+			cout<<"Line no "<<ip<<" : "<<line<<endl;
+			j++;
+		}
+		ip++;
+    }
+    personal_filein.close();
+    
 	// TODO: delete tree nodes
 }
 
@@ -355,30 +410,30 @@ int search(char *type) {
 	return 0;
 }
 
-void add(char c) {
-    q=search(yytext);
+void add(char c,char* s) {
+    q=search(s);
 	if(q==0) {
 		if(c=='K') {
-			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].id_name=strdup(s);
 			symbolTable[count].data_type=strdup("N/A");
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup("Keyword\t");
 			count++;
 		}
 		else if(c=='V') {
-			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].id_name=strdup(s);
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup(type);
 			count++;
 		}
 		else if(c=='C') {
-			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].id_name=strdup(s);
 			symbolTable[count].data_type=strdup("CONST");
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup("Constant");
 			count++;
 		}else if(c=='A'){
-			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].id_name=strdup(s);
 			symbolTable[count].data_type=strdup("ARRAY");
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup("Array");
@@ -388,10 +443,19 @@ void add(char c) {
 }
 
 void add_arr(char c, string sizeArr){
-	q=search(yytext);
+	char s[20]={0};
+	int i;
+	for(i=0;i<sizeArr.size();i++)
+	{
+		if(sizeArr[i]==':')
+		break;
+		s[i] = sizeArr[i];
+	}
+	sizeArr = sizeArr.substr(i+1);
+	q=search(s);
 	if(q==0){
 	if(c=='A'){
-			symbolTable[count].id_name=strdup(yytext);
+			symbolTable[count].id_name=strdup(s);
 			symbolTable[count].data_type=strdup(sizeArr.c_str());
 			symbolTable[count].line_no=countn;
 			symbolTable[count].type=strdup("Array");
@@ -553,6 +617,5 @@ void writeIrToFile(string ircode){
 }
 
 int yyerror(char *s){
-  std::cout<< "\n\nError: "<< s <<" in function "<< curr_function <<" in between lines "<< lines-1 <<" - " << lines+1 << std::endl;
 
 }

@@ -8,7 +8,7 @@
 
     using namespace std;
     int a = 0;
-    int lines=0;
+    int lines=1;
     string curr_function="main";
     vector<string> tokens;
     map<string,string> ma;
@@ -81,87 +81,85 @@ identifier  {letter_}+({digit}|{letter_})*
 expr        ({identifier}{relop}{identifier}|{identifier})
 
 %%
-{let}       {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LET;}
-{const}     {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return CONST;}
-{if}        {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return IF;}
-{else}      {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return ELSE;}
-{loop}      {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LOOP;}
-{stop}      {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return STOP;}
-{continue}  {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return CONTINUE;}
-{function}  {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return FUNCTION;}
-{return}    {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RETURN;}
-{print}     {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return PRINT;}
-{main}      {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  
+{let}       {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LET;}
+{const}     {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return CONST;}
+{if}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return IF;}
+{else}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return ELSE;}
+{loop}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LOOP;}
+{stop}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return STOP;}
+{continue}  {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return CONTINUE;}
+{function}  {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return FUNCTION;}
+{return}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RETURN;}
+{print}     {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return PRINT;}
+{main}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  
                                         curr_function = strdup(yytext); 
-                                        cout << "\nNAME OF FUNCTION: " << curr_function<< endl; return MAIN;}
-{input}     {printf("\nKEYWORD: %s", yytext);strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return INPUT;}
+                                         return MAIN;}
+{input}     {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return INPUT;}
 
-{comment_start}([^*]|\*+[^*$])*{comment_end}                {printf("\nCOMMENT: %s", yytext); }
-\"(\\.|[^"\\])*\"     {printf("\nSTRING: %s", yytext);tokens.push_back(strdup(yytext));  return STRING;}
-\'(\\.|[^'\\])*\'     {printf("\nSTRING: %s", yytext);tokens.push_back(strdup(yytext));  return STRING;}
+{comment_start}([^*]|\*+[^*$])*{comment_end}                {string s = strdup(yytext); for(int i=0;i<s.size();i++){if(s[i]=='\n')lines++;} }
+\"(\\.|[^"\\])*\"     {tokens.push_back(strdup(yytext));  return STRING;}
+\'(\\.|[^'\\])*\'     {tokens.push_back(strdup(yytext));  return STRING;}
 
-{eq}        {printf("\nEQ");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return EQ;}
-{lt}        {printf("\nLT");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LT;}
-{ne}        {printf("\nNE");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return NE;}
-{le}        {printf("\nLE");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LE;}
-{gt}        {printf("\nGT");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return GT;}
-{ge}        {printf("\nGE");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return GE;}
-
-
-{assign}    {printf("\nASSIGN");   strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return ASSIGN;}
-{incone}    {printf("\nINCONE");   strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return INCONE;}
-{decone}    {printf("\nDECONE");   strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return DECONE;}
-{incassign} {printf("\nINCASSIGN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return INCASSIGN;}
-{decassign} {printf("\nDECASSIGN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return DECASSIGN;}
-{mulassign} {printf("\nMULASSIGN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return MULASSIGN;}
-{divassign} {printf("\nDIVASSIGN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return DIVASSIGN;}
+{eq}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return EQ;}
+{lt}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LT;}
+{ne}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return NE;}
+{le}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LE;}
+{gt}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return GT;}
+{ge}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return GE;}
 
 
-{plus}      {printf("\nPLUS");   strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return PLUS;}
-{minus}     {printf("\nMINUS");  strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));      return MINUS;}
-{mult}      {printf("\nMULT");   strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return MULT;}
-{divide}    {printf("\nDIVIDE"); strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return DIVIDE;}
-{rem}       {printf("\nREM");    strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return REM;}
-{bitand}    {printf("\nBITAND"); strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return BITAND;}
-{bitor}     {printf("\nBITOR");  strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return BITOR;}
-{neg}       {printf("\nNEG");    strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return NEG;}
-{xor}       {printf("\nXOR");    strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return XOR;}
-{and}       {printf("\nAND");    strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return AND;}
-{or}        {printf("\nOR");     strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return OR;}
+{assign}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return ASSIGN;}
+{incone}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return INCONE;}
+{decone}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return DECONE;}
+{incassign} {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return INCASSIGN;}
+{decassign} {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return DECASSIGN;}
+{mulassign} {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return MULASSIGN;}
+{divassign} {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return DIVASSIGN;}
 
 
-{lparen}    {printf("\nLPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));   return LPAREN;}
-{rparen}    {printf("\nRPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));   return RPAREN;}
-{lsparen}   {printf("\nLSPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LSPAREN;}
-{rsparen}   {printf("\nRSPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RSPAREN;}
-{lcparen}   {printf("\nLCPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LCPAREN;}
-{rcparen}   {printf("\nRCPAREN");strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RCPAREN;}
+{plus}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return PLUS;}
+{minus}     {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));      return MINUS;}
+{mult}      {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return MULT;}
+{divide}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return DIVIDE;}
+{rem}       {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));       return REM;}
+{bitand}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return BITAND;}
+{bitor}     {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return BITOR;}
+{neg}       {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return NEG;}
+{xor}       {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return XOR;}
+{and}       {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return AND;}
+{or}        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));    return OR;}
+
+
+{lparen}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));   return LPAREN;}
+{rparen}    {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));   return RPAREN;}
+{lsparen}   {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LSPAREN;}
+{rsparen}   {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RSPAREN;}
+{lcparen}   {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return LCPAREN;}
+{rcparen}   {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));  return RCPAREN;}
 
 
 
-{number}                        {printf("\nNUMBER: %s", yytext); strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return NUMBER;}
-{float}                         {printf("\nFLOAT: %s", yytext); strcpy(yylval.nd_obj.name,(yytext)); tokens.push_back(strdup(yytext));     return FLOAT;}
+{number}                        {strcpy(yylval.nd_obj.name,(yytext));tokens.push_back(strdup(yytext));     return NUMBER;}
+{float}                         {strcpy(yylval.nd_obj.name,(yytext)); tokens.push_back(strdup(yytext));     return FLOAT;}
 {identifier}                    {
-                                    printf("\nIDENTIFIER: %s", yytext); 
                                     tokens.push_back(strdup(yytext)); 
                                     strcpy(yylval.nd_obj.name,(yytext)); 
                                     if(tokens[tokens.size()-2]=="let"){
                                         ma[tokens[tokens.size()-1]]="name:"+tokens[tokens.size()-1]+";"+"scope: "+to_string(lines)+";";
-                                        cout<<"\nIDENTIFIER: "<<ma[tokens[tokens.size()-1]]<<endl; 
                                     }else if(tokens[tokens.size()-2]=="function"){
                                         curr_function = strdup(yytext);
-                                        cout<<"\nNAME OF FUNCTION: "<<curr_function<<endl; 
                                     }
                                     return IDENTIFIER;
                                 }
 
-{comma}                         {printf("\COMMA");  tokens.push_back(strdup(yytext)); return COMMA;}
-{semicol}                       {printf("\nSEMICOL");tokens.push_back(strdup(yytext));   return SEMICOL;}
+{comma}                         {tokens.push_back(strdup(yytext)); return COMMA;}
+{semicol}                       {tokens.push_back(strdup(yytext));   return SEMICOL;}
 {space}                         {} 
-\n|\r                           {printf("\n"); countn++; lines++;}
-\t                              {printf("\t"); }
+\n                           {countn++; lines++;}
+\r                           
+\t                              
  .                              {printf("\n!!!Illegal Token!!!");}
-"@@@" 		                    {printf("\nFinished Parsing."); return 0;}
+"@@@" 		                    {return 0;}
 
 %%
 
