@@ -260,13 +260,13 @@ CONDITION:
 LPAREN CONDITION RPAREN {$$.nd = $2.nd;} |
 CONDITION AND BOOLEANS {
 						int Label = irLabelCount++;
-						ircode = $1.nd->code +"GOTO L"+to_string(Label)+ "\nIF_FALSE" + $3.nd->code; 
+						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+ "\nIF_FALSE" + $3.nd->code; 
 						$2.nd = mknode(NULL, NULL, "AND", "&&"); 
 						$$.nd = mknode($1.nd, $3.nd, $2.name, ircode,Label);
 						}|
 CONDITION OR BOOLEANS {
 						int Label = irLabelCount++;
-						ircode = $1.nd->code +"GOTO L"+to_string(Label)+"\n L"+to_string(Label)+ ": IF_FALSE" + $3.nd->code;
+						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+"\n Label_"+to_string(Label)+ ": IF_FALSE" + $3.nd->code;
 					 	$2.nd = mknode(NULL, NULL, "OR", "||");
 					    $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
 CONDITION XOR BOOLEANS {
@@ -284,7 +284,7 @@ NEG BOOLEANS {
 
 CONDITIONAL_STAMENT:
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ; 
-					ircode = "IF_FALSE " + $3.nd->code + "GOTO L"; 
+					ircode = "IF_FALSE " + $3.nd->code + "GOTO Label_"; 
 					if($3.nd->trueLabel==-1)
 						iflastindex=irLabelCount++;
 					else
@@ -296,7 +296,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ;
 					 }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { 
 										int iflastindex ,elseend;
-										ircode = "IF_FALSE " + $3.nd->code + " GOTO "+"L";
+										ircode = "IF_FALSE " + $3.nd->code + " GOTO "+"Label_";
 										if($3.nd->trueLabel==-1)
 											iflastindex=irLabelCount++;
 										else
@@ -304,7 +304,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RC
 										elseend = irLabelCount++;
 										ircode += to_string(iflastindex) + " \n"; add('K',$1.name); 
 										struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-										ircode = ircode + $6.nd->code + "\n GOTO L"+to_string(elseend)+"\n L"+to_string(iflastindex)+": " + $10.nd->code+"\n L"+to_string(elseend) +":";
+										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":";
 										$$.nd = mknode(iff, $10.nd, "if-else", ircode,elseend);
 										    }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ 
@@ -325,8 +325,8 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{
 
 
 FUNCTIONCALL:
-IDENTIFIER LPAREN PARAMS RPAREN {ircode =  "L" + string($1.name)+": "; $$.nd=mknode(NULL,NULL,$1.name, ircode);}|
-MAIN LPAREN PARAMS RPAREN{ircode = "Lmain: "; $$.nd=mknode(NULL,NULL,$1.name, ircode);};
+IDENTIFIER LPAREN PARAMS RPAREN {ircode =  "Label_" + string($1.name)+": "; $$.nd=mknode(NULL,NULL,$1.name, ircode);}|
+MAIN LPAREN PARAMS RPAREN{ircode = "Label_main: "; $$.nd=mknode(NULL,NULL,$1.name, ircode);};
 
 FUNCTIONDEF:
 FUNCTION FUNCTIONCALL LCPAREN stment_seq RCPAREN {ircode = $2.nd->code + $4.nd->code + "return back \n";  $$.nd=mknode($4.nd, NULL, "Function", ircode); };
@@ -346,7 +346,7 @@ LOOP { add('K',$1.name); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LP
 											loopstart=beginer,loopend=ender;
 											ircode = "L"+to_string(loopstart)+": "+"IF_FALSE " + $4.nd->code +"GOTO L"+to_string(loopend)+"\n";
 											struct node *temp = mknode($4.nd, $10.nd, "CONDITION", ircode); 
-											ircode = ircode + $7.nd->code+ $10.nd->code + "\n GOTO L"+to_string(loopstart)+"\n L"+to_string(loopend)+": \n"; 
+											ircode = ircode + $7.nd->code+ $10.nd->code + "\n GOTO Label_"+to_string(loopstart)+"\n Label_"+to_string(loopend)+": \n"; 
 											$$.nd = mknode(temp, $7.nd, $1.name, ircode);
 											ender = beginer =-1;
 											}; 
