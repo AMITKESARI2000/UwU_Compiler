@@ -1,12 +1,18 @@
 function main () {
-    let ann[10][2][20];
+    let arr[10][2][20];
     arr[2][1][10] = 10+11;
     let a = 10;
+    arr[2][1][10 = 10+11;
+    let a  10;
     let b = "20";
     let c = a + b;
+    let c = a  b;
     let d = "amit kesari";
     $* hey  
-    hello print *$
+    hello p
+    
+    rint *$
     print(c);
+    print(/c);
     a++;
-}@@@
+}@@@ 

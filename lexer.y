@@ -51,6 +51,8 @@
     extern int countn;
 	string curr_arr;
 
+	vector<int>error_lines;
+
     struct node { 
 		struct node *left; 
 		struct node *right; 
@@ -81,19 +83,35 @@
 %token <nd_obj> LT NE LE GT GE ASSIGN INCONE DECONE INCASSIGN DECASSIGN MULASSIGN DIVASSIGN 
 %left  <nd_obj> MULT DIVIDE PLUS MINUS 
 %right <nd_obj> NEG
-%token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN 
+%token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN error
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA 
 %type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
 
 %%
 
-program:  stment_seq {ircode = $1.nd->code; $$.nd=mknode($1.nd, NULL, "Program", ircode); head = $$.nd; writeIrToFile(ircode); cout << "\n\nGot my ircode@@@ \n" << $$.nd->code << endl; };
-
+program:  stment_seq {
+					
+					ircode = $1.nd->code;
+					 $$.nd=mknode($1.nd, NULL, "Program", ircode);
+					  head = $$.nd; writeIrToFile(ircode);
+					   cout << "\n\nGot my ircode@@@ \n" << $$.nd->code << endl;
+					    };
 
 stment_seq:
-STATEMENT stment_seq { ircode = $1.nd->code + $2.nd->code; $$.nd=mknode($1.nd, $2.nd,"Statements", ircode ); irtempCount = 0; }| 
+STATEMENT stment_seq { 
+					ircode = "";
+					if($1.nd == 0!=true)
+					ircode = $1.nd->code ;
+					if($2.nd == 0!=true)
+					ircode+= $2.nd->code;
+					 $$.nd=mknode($1.nd, $2.nd,"Statements", ircode );
+					  irtempCount = 0;
+					   }| 
 STATEMENT {$$.nd = $1.nd; irtempCount = 0;}|
-error SEMICOL {cout << "@@@Error on Line:: " << lines << endl;} stment_seq
+error SEMICOL {
+				cout << "@@@Error on Line:: " << lines << endl; 
+				error_lines.push_back(lines-1);
+} stment_seq
 ;
 
 STATEMENT:
@@ -165,7 +183,6 @@ ARRAY SEMICOL { add_arr('A',$1.nd->code);
 				vector<string> array_dim  = get_dim($1.nd->code);
 				int dimsum = 1;
 				for(string a : array_dim){
-					cout<<"here----"<<a<<endl;
 					 dimsum *= stoi(a);
 				}
 				ircode = arrName + "["+to_string(dimsum)+"]\n";
@@ -348,19 +365,38 @@ int main(int argc, char *argv[])
   yyparse();
   printf("\n");
   int i=0;
-  int space =15;
+  int space =20;
+
   std::cout<<std::setw(space*3)<<"SYMBOL TABLE"<<std::endl;
   std::cout<<std::endl;
   std::cout<<std::setw(space)<<"IDENTIFIER"<<std::setw(space)<<"TYPE"<<std::setw(space)<<"let/const"<<std::setw(space)<<"line No"<<std::endl;
 	for(i=0; i<count; i++) {
-		// std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
-		printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
+		std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
+		// printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
 	}
 	printtree(head);
 	for(i=0;i<count;i++){
 		free(symbolTable[i].id_name);
 		free(symbolTable[i].type);
 	}
+	cout<<"Found Error in folloing places "<<endl;
+	ifstream personal_filein(argv[1]);
+    string line="";
+	int ip=0;
+	int j=0;
+    while ( getline ( personal_filein , line) )
+    {
+		if(j>=error_lines.size())
+		break;
+		if(ip==error_lines[j])
+		{
+			cout<<"Line no "<<ip<<" : "<<line<<endl;
+			j++;
+		}
+		ip++;
+    }
+    personal_filein.close();
+    
 	// TODO: delete tree nodes
 }
 
@@ -582,6 +618,5 @@ void writeIrToFile(string ircode){
 }
 
 int yyerror(char *s){
-  std::cout<< "\n\nError: "<< s <<" in function "<< curr_function <<" in between lines "<< lines-1 <<" - " << lines+1 << std::endl;
 
 }
