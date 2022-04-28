@@ -59,8 +59,6 @@ def free_all_reg():
 
 
 # get a free register for computation
-
-
 def get_free_reg(var_name):
 
     for key in registers.keys():
@@ -75,9 +73,22 @@ def get_free_reg(var_name):
     # if no reg is free, empty a register by storing its value through sw
     return free_reg()
 
+def get_asciiz_var(expr_var):
+    for dataline in data_block:
+        if expr_var in dataline:
+            return dataline.split(":",1)[0]              
 
-
-
+def get_var_type(variable_name):
+    if "var_" not in variable_name:
+        variable_name = "var_" + variable_name
+    for dataline in data_block:
+        if variable_name in dataline:
+            if "word" in dataline:
+                return "word"
+            elif "asciiz" in dataline:
+                return "asciiz"
+            elif "space" in dataline:
+                return "space"
 
 
 # parse the labels and the data section
@@ -136,11 +147,17 @@ for each in code_parsed:
         output_reg = ""
         expr_reg = []
 
+        var[0] = var[0].strip()
         if var[0] in variables.keys() and not isArray:
-            output_reg = get_free_reg("var_"+var[0].strip())
-            code_block.append("lw $"+output_reg+" , "+"var_"+var[0])
+            output_reg = get_free_reg("var_"+var[0])
+            
+            var_type = get_var_type(var[0])
+            if var_type == "asciiz":
+                code_block.append("la $"+output_reg+" , "+"var_"+var[0])
+            else:
+                code_block.append("lw $"+output_reg+" , "+"var_"+var[0])
         else:
-            output_reg = get_free_reg("temp_"+var[0].strip())
+            output_reg = get_free_reg("temp_"+var[0])
 
         
         expr_var = var[1].split('+',1)
@@ -170,17 +187,57 @@ for each in code_parsed:
               else:
                 # normal addition expression
                 exp = exp.strip()
-                # print("========",exp,variables.keys())
                 if exp in variables.keys():
-                      expr_reg_ = get_free_reg("var_"+exp.strip())
-                      code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
+                    expr_reg_ = get_free_reg("var_"+exp.strip())
+                    code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
                 else:
                     expr_reg_ = get_free_reg("temp_"+exp.strip())
                     if "_" not in exp:
                         code_block.append("li $"+expr_reg_+" , "+exp)
                 expr_reg.append(expr_reg_)
             
-            code_block.append("add $"+output_reg+" , $" +
+            var_type1 = get_var_type(registers[expr_reg[0]][1])
+            var_type2 = get_var_type(registers[expr_reg[1]][1])
+            if var_type1 == "asciiz" or var_type2 == "asciiz":
+              #   convert data block type of var_c
+              asciiz_var = registers[output_reg][1]
+              for i in range(len(data_block)):
+                if asciiz_var in data_block[i] and "word" in data_block[i]:
+                  convert_to_str = re.split(r" +", data_block[i])[-1].strip()
+                  
+                  data_block[i] = data_block[i].split(".word")[0]
+                  data_block[i] += ".asciiz \"" + convert_to_str + "\""
+              #  use concat string
+              code_block.append("la $a0 , " + registers[expr_reg[0]][1])
+              code_block.append("la $a1 , " + registers[expr_reg[1]][1])
+              code_block.append("la $a2 , " + registers[output_reg][1])
+              strcat = """
+concat:
+    lb $t0, 0($a0)          
+    beq $t0, $0, string2    
+    sb $t0, 0($a2)          
+    addi $a0, $a0, 1        
+    addi $a2, $a2, 1        
+    j concat     
+
+string2:
+    lb $t0, 0($a1)          
+    beq $t0, $0, done       
+    sb $t0, 0($a2)          
+    addi $a1, $a1, 1        
+    addi $a2, $a2, 1        
+    j string2    
+
+done:
+    sb $0, 0($a2)
+
+                """
+              code_block.append(strcat)
+              
+
+            
+            else:
+              code_block.append("add $"+output_reg+" , $" +
                               expr_reg[0] + " , $" + expr_reg[1])
         else:
           exp = expr_var[0]
@@ -205,13 +262,25 @@ for each in code_parsed:
           else:
             # normal assignment operation
             if expr_var[0] in variables.keys() and not isArray:
-                expr_reg_ = get_free_reg("var_"+expr_var[0].strip())
-                code_block.append("lw $"+expr_reg_+" , "+"var_"+expr_var[0])
+              expr_reg_ = get_free_reg("var_"+expr_var[0].strip())
+              code_block.append("lw $"+expr_reg_+" , "+"var_"+expr_var[0])
+              expr_reg.append(expr_reg_)
+              code_block.append("add $"+output_reg+" , $" +
+                              expr_reg[0] + " , $zero")
             elif not isArray:
-              expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
-              code_block.append("li $"+expr_reg_+" , "+expr_var[0])
-            expr_reg.append(expr_reg_)
-            code_block.append("add $"+output_reg+" , $" +
+              if '"' in expr_var[0]:
+                #   if its a string don't do li
+                print()
+                # expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
+                # asciiz_var = get_asciiz_var(expr_var[0])
+                # code_block.append("la $"+expr_reg_+" , "+asciiz_var)
+                # expr_reg.append(expr_reg_)
+                
+              else:
+                expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
+                code_block.append("li $"+expr_reg_+" , "+expr_var[0])
+                expr_reg.append(expr_reg_)
+                code_block.append("add $"+output_reg+" , $" +
                               expr_reg[0] + " , $zero")
 
         if isArray:
@@ -220,118 +289,12 @@ for each in code_parsed:
         
         
         if not ("t_1" in var[0] or "t_0" in var[0]):
-          print("==================")
           free_all_reg()
     elif "Label_" in each:
         code_block.append(each)
 
-'''TODO: string add
-strcat = """
-blt     $s0, $s1, string1_short
-    la      $a1, string1
-    jal     strcat
-
-    la      $a1, string2
-    jal     strcat
-
-    j       print_full
-    string1_short:
-    # string 2 is longer -- append to output
-    la      $a1,string2
-    jal     strcat
-
-    # string 1 is shorter -- append to output
-    la      $a1,string1
-    jal     strcat
-
-# show results
-print_full:
-    # output the prefix message for the full string
-    li      $v0,4
-    la      $a0,full
-    syscall
-
-    # output the combined string
-    li      $v0,4
-    la      $a0,string3
-    syscall
-
-    # finish the line
-    li      $v0,4
-    la      $a0,newline
-    syscall
-
-    li      $v0,10
-    syscall
-
-# prompt -- prompt user for string
-#
-# RETURNS:
-#   v0 -- length of string (with newline stripped)
-#
-# arguments:
-#   a0 -- address of prompt string
-#   a1 -- address of string buffer
-#
-# clobbers:
-#   v1 -- holds ASCII for newline
-prompt:
-    # output the prompt
-    li      $v0,4                   # syscall to print string
-    syscall
-
-    # get string from user
-    li      $v0,8                   # syscall for string read
-    move    $a0,$a1                 # place to store string
-    li      $a1,256                 # maximum length of string
-    syscall
-
-    li      $v1,0x0A                # ASCII value for newline
-    move    $a1,$a0                 # remember start of string
-
-# strip newline and get string length
-prompt_nltrim:
-    lb      $v0,0($a0)              # get next char in string
-    addi    $a0,$a0,1               # pre-increment by 1 to point to next char
-    beq     $v0,$v1,prompt_nldone   # is it newline? if yes, fly
-    bnez    $v0,prompt_nltrim       # is it EOS? no, loop
-
-prompt_nldone:
-    subi    $a0,$a0,1               # compensate for pre-increment
-    sb      $zero,0($a0)            # zero out the newline
-    sub     $v0,$a0,$a1             # get string length
-    jr      $ra                     # return
-
-# strcat -- append string
-#
-# RETURNS:
-#   a0 -- updated to end of destination
-#
-# arguments:
-#   a0 -- pointer to destination buffer
-#   a1 -- pointer to source buffer
-#
-# clobbers:
-#   v0 -- current char
-strcat:
-    lb      $v0,0($a1)              # get the current char
-    beqz    $v0,strcat_done         # is char 0? if yes, done
-
-    sb      $v0,0($a0)              # store the current char
-
-    addi    $a0,$a0,1               # advance destination pointer
-    addi    $a1,$a1,1               # advance source pointer
-    j       strcat
-
-strcat_done:
-    sb      $zero,0($a0)            # add EOS
-    jr      $ra                     # return
-"""
 
 
-            
-code_block.append(strcat)
-'''
 
 # generate and write into the .asm file
 output_mips.write(".data \n")
