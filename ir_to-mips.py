@@ -5,6 +5,7 @@ ir_file = open('./output.uwuir', 'r')
 output_mips = open('./output.asm', 'w')
 
 str_num = 0
+str_num_in = 0
 code_parsed = []
 data_block = []
 code_block = []
@@ -292,6 +293,11 @@ for each in code_parsed:
                 str_num += 1
                 code_block.append("syscall")
             elif v in variables:
+              if v+"_str" in variables:
+                code_block.append("li $v0 , 4")
+                code_block.append("la $a0 , var_" + v + "_str")
+                code_block.append("syscall")
+              else:
                 code_block.append("li $v0 , 1")
                 code_block.append("lw $a0 , var_"+v)
                 code_block.append("syscall")
@@ -301,10 +307,25 @@ for each in code_parsed:
                 code_block.append("syscall")
     elif "input" in each:
         var = each[each.find("input:") + 6:].strip()
-        if var in variables:
+        var = var.split(",")
+        var[0] = var[0].strip()
+        var[1] = var[1].strip()
+        print(var)
+        if var[0] in variables:
+          if var[1] == "0":
             code_block.append("li $v0 , 5")
-            code_block.append("lw $a0 , var_"+var)
             code_block.append("syscall")
+            code_block.append("sw $v0 , var_"+var[0])
+          else:
+            
+              data_block.append(
+                  "var_" + var[0] + "_str:     .asciiz \"" + 50*" " +"\"")
+              variables[var[0]+"_str"] = [".asciiz", "val"]
+              code_block.append("li $v0 , 8")
+              code_block.append("li $a1 , 50")
+              code_block.append("la $a0 , var_" + var[0]+"_str")
+              str_num_in += 1
+              code_block.append("syscall")
         else:
             code_block.append("li $v0 , 1")
             code_block.append("lw $a0 , ERROR")

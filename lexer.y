@@ -85,7 +85,7 @@
 %right <nd_obj> NEG
 %token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN error
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA 
-%type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONCALL2 FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
+%type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR EXPR2 BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONCALL2 FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
 
 %%
 
@@ -135,9 +135,10 @@ ARRAY INCASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " +
 ARRAY DECASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY INCONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] + 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY DECONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-PRINT LPAREN EXPR RPAREN SEMICOL { ircode = $3.nd->code+"\nprint: " + (string)$3.nd->token + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); irtempCount = 0;}|
+PRINT LPAREN EXPR2 RPAREN SEMICOL { ircode = "print: " + $3.nd->code + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); irtempCount = 0;}|
 PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print: return_value" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
-INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
+INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , 0\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
+INPUT LPAREN IDENTIFIER COMMA NUMBER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , " + string($5.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; irtempCount = 0;}|
 RETURN {add('K',$1.name); } EXPR SEMICOL{ 
@@ -247,6 +248,18 @@ BITAND {$$.nd = mknode(NULL, NULL, "BITAND", " & ");}|
 BITOR  {$$.nd = mknode(NULL, NULL, "BITOR", " | ");}|
 XOR    {$$.nd = mknode(NULL, NULL, "XOR", " ^ ");};
 
+EXPR2:
+LPAREN EXPR2 RPAREN { $$.nd = $2.nd; } |
+EXPR2 arithmetic VARIABLES { 
+							ircode =  $1.nd->code + $2.nd->code  + $3.nd->code;
+							 $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);
+							 
+							 }|
+EXPR2 arithmetic FUNCTIONCALL { ircode = "(" + $1.nd->code + $2.nd->code + ")" + $3.nd->code; $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
+VARIABLES { $$.nd = $1.nd;} |
+IDENTIFIER INCONE { $$.nd = $1.nd; } |
+IDENTIFIER DECONE { $$.nd = $1.nd; };
+
 EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
 EXPR arithmetic VARIABLES { 
@@ -282,13 +295,13 @@ LPAREN CONDITION RPAREN {$$.nd = $2.nd;} |
 CONDITION AND BOOLEANS {
 						
 						int Label = irLabelCount++;
-						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+ "\nIF_FALSE" + $3.nd->code; 
+						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+ "\nIF_FALSE " + $3.nd->code; 
 						$2.nd = mknode(NULL, NULL, "AND", "&&"); 
 						$$.nd = mknode($1.nd, $3.nd, $2.name, ircode,Label);
 						}|
 CONDITION OR BOOLEANS {
 						int Label = irLabelCount++;
-						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+"\n Label_"+to_string(Label)+ ": IF_FALSE" + $3.nd->code;
+						ircode = $1.nd->code +"GOTO Label_"+to_string(Label)+"\n Label_"+to_string(Label)+ ": IF_FALSE " + $3.nd->code;
 					 	$2.nd = mknode(NULL, NULL, "OR", "||");
 					    $$.nd = mknode($1.nd, $3.nd, $2.name, ircode);}|
 CONDITION XOR BOOLEANS {

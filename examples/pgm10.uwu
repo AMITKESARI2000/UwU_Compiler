@@ -1,7 +1,8 @@
 function main(){
-  let i = 0;
-
-  loop(i<10){
+  let i = 10;
+  input(i);
+  print(i);
+  $*loop(i<10){
     if(i < 5){
       print("one" + i + "\n");
     }else if(i >= 5 && i < 7){
@@ -12,7 +13,9 @@ function main(){
     }
     print("hello");
   }(i++)
-
+*$
+  input(i,1);
+  print(i);
   print("End");
 
 }@@@
