@@ -1,15 +1,21 @@
 function main(){
-  let i = 0;
-
-  loop(i<10){
-    if(i%2 >= 0){
-      print("one");
-    }else if(i&2 < 0){
-      print("two");
-    }else if(i+1<10 && 19%6 ==0){
-      print("three");
+  let i = 10;
+  input(i);
+  print(i);
+  $*loop(i<10){
+    if(i < 5){
+      print("one" + i + "\n");
+    }else if(i >= 5 && i < 7){
+      print("two"+ i + "\n");
+    }else if(i<10){
+      print("three"+ i + "\n");
       stop;
     }
+    print("hello");
   }(i++)
+*$
+  input(i,1);
+  print(i);
+  print("End");
 
 }@@@

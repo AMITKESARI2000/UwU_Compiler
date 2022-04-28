@@ -32,5 +32,5 @@ preprocessor: preprocessor.cc parser
 .PHONY: all clean
 
 clean:
-	rm -rvf *.o *.out *.exe *.uwupre parser preprocessor y.tab.c lex.yy.c y.tab.h y.output
+	rm -rvf *.o *.out *.exe *.uwupre *.uwuir *.asm parser preprocessor y.tab.c lex.yy.c y.tab.h y.output
 
