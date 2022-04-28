@@ -4,6 +4,7 @@ import re
 ir_file = open('./output.uwuir', 'r')
 output_mips = open('./output.asm', 'w')
 
+str_num = 0
 code_parsed = []
 data_block = []
 code_block = []
@@ -54,7 +55,7 @@ def free_all_reg():
     for key in registers.keys():
         if registers[key][0] == False:
             if "temp_" not in registers[key][1]:
-              code_block.append("sw $"+key+" , " + registers[key][1])
+                code_block.append("sw $"+key+" , " + registers[key][1])
             registers[key] = [True, None, 0]
 
 
@@ -74,10 +75,6 @@ def get_free_reg(var_name):
 
     # if no reg is free, empty a register by storing its value through sw
     return free_reg()
-
-
-
-
 
 
 # parse the labels and the data section
@@ -119,8 +116,7 @@ for each in ir_file:
 
 # parse the TAC to MIPS
 for each in code_parsed:
-    print(each)
-    if "=" in each and "==" not in each:
+    if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each:
         var = each.split("=")
         var[0] = var[0].replace("_i", "").strip()
         var[1] = var[1].strip()
@@ -142,90 +138,184 @@ for each in code_parsed:
         else:
             output_reg = get_free_reg("temp_"+var[0].strip())
 
-        
-        expr_var = var[1].split('+',1)
+        expr_var = var[1].split('+', 1)
 
         if len(expr_var) > 1:
 
             for exp in expr_var:
-              if "*" in exp:
-                # for t = t1 + t2*m type of statement (parsing t2*m)
-                new_exp = exp.split("*")
-                expr_reg1=[]
-                for exp_ in new_exp:
-                  if exp_ in variables.keys() and not isArray:
-                      expr_reg__ = get_free_reg("var_"+exp_.strip())
-                      code_block.append("lw $"+expr_reg__+" , "+"var_"+exp_)
-                  elif not isArray:
-                      expr_reg__ = get_free_reg("temp_"+exp_.strip())
-                      
-                      if "_" not in exp_:
-                        code_block.append("li $"+expr_reg__+" , "+exp_)
-                  expr_reg1.append(expr_reg__)
-                
-                code_block.append("mul $"+expr_reg__+" , $" +
-                                  expr_reg1[0] + " , $" + expr_reg1[1])
-                
-                expr_reg.append(expr_reg__)
-              else:
-                # normal addition expression
-                exp = exp.strip()
-                # print("========",exp,variables.keys())
-                if exp in variables.keys():
-                      expr_reg_ = get_free_reg("var_"+exp.strip())
-                      code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
+                if "*" in exp:
+                    # for t = t1 + t2*m type of statement (parsing t2*m)
+                    new_exp = exp.split("*")
+                    expr_reg1 = []
+                    for exp_ in new_exp:
+                        if exp_ in variables.keys() and not isArray:
+                            expr_reg__ = get_free_reg("var_"+exp_.strip())
+                            code_block.append(
+                                "lw $"+expr_reg__+" , "+"var_"+exp_)
+                        elif not isArray:
+                            expr_reg__ = get_free_reg("temp_"+exp_.strip())
+
+                            if "_" not in exp_:
+                                code_block.append("li $"+expr_reg__+" , "+exp_)
+                        expr_reg1.append(expr_reg__)
+
+                    code_block.append("mul $"+expr_reg__+" , $" +
+                                      expr_reg1[0] + " , $" + expr_reg1[1])
+
+                    expr_reg.append(expr_reg__)
                 else:
-                    expr_reg_ = get_free_reg("temp_"+exp.strip())
-                    if "_" not in exp:
-                        code_block.append("li $"+expr_reg_+" , "+exp)
-                expr_reg.append(expr_reg_)
-            
+                    # normal addition expression
+                    exp = exp.strip()
+                    # print("========",exp,variables.keys())
+                    if exp in variables.keys():
+                        expr_reg_ = get_free_reg("var_"+exp.strip())
+                        code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
+                    else:
+                        expr_reg_ = get_free_reg("temp_"+exp.strip())
+                        if "_" not in exp:
+                            code_block.append("li $"+expr_reg_+" , "+exp)
+                    expr_reg.append(expr_reg_)
+
             code_block.append("add $"+output_reg+" , $" +
                               expr_reg[0] + " , $" + expr_reg[1])
         else:
-          exp = expr_var[0]
-          if "*" in exp:
-            # normal multiplication expression
-              new_exp = exp.split("*")
-              expr_reg1 = []
-              for exp_ in new_exp:
-                  if exp_ in variables.keys() and not isArray:
-                      expr_reg__ = get_free_reg("var_"+exp_.strip())
-                      code_block.append("lw $"+expr_reg__+" , "+"var_"+exp_)
-                  elif not isArray:
-                      expr_reg__ = get_free_reg("temp_"+exp_.strip())
-                      if "_" not in exp_:
-                        code_block.append("li $"+expr_reg__+" , "+exp_)
-                  expr_reg1.append(expr_reg__)
-              
-              code_block.append("mul $"+expr_reg1[0]+" , $" +
+            exp = expr_var[0]
+            if "*" in exp:
+                # normal multiplication expression
+                new_exp = exp.split("*")
+                expr_reg1 = []
+                for exp_ in new_exp:
+                    if exp_ in variables.keys() and not isArray:
+                        expr_reg__ = get_free_reg("var_"+exp_.strip())
+                        code_block.append("lw $"+expr_reg__+" , "+"var_"+exp_)
+                    elif not isArray:
+                        expr_reg__ = get_free_reg("temp_"+exp_.strip())
+                        if "_" not in exp_:
+                            code_block.append("li $"+expr_reg__+" , "+exp_)
+                    expr_reg1.append(expr_reg__)
+
+                code_block.append("mul $"+expr_reg1[0]+" , $" +
                                   expr_reg1[0] + " , $" + expr_reg1[1])
 
-              expr_reg.append(expr_reg__)
-          else:
-            # normal assignment operation
-            if expr_var[0] in variables.keys() and not isArray:
-                expr_reg_ = get_free_reg("var_"+expr_var[0].strip())
-                code_block.append("lw $"+expr_reg_+" , "+"var_"+expr_var[0])
-            elif not isArray:
-              expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
-              code_block.append("li $"+expr_reg_+" , "+expr_var[0])
-            expr_reg.append(expr_reg_)
-            code_block.append("add $"+output_reg+" , $" +
-                              expr_reg[0] + " , $zero")
+                expr_reg.append(expr_reg__)
+            else:
+                # normal assignment operation
+                if expr_var[0] in variables.keys() and not isArray:
+                    expr_reg_ = get_free_reg("var_"+expr_var[0].strip())
+                    code_block.append("lw $"+expr_reg_ +
+                                      " , "+"var_"+expr_var[0])
+                elif not isArray:
+                    expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
+                    code_block.append("li $"+expr_reg_+" , "+expr_var[0])
+                expr_reg.append(expr_reg_)
+                code_block.append("add $"+output_reg+" , $" +
+                                  expr_reg[0] + " , $zero")
 
         if isArray:
-          arr_size = get_free_reg("temp_"+arr_size.strip())
-          code_block.append("sw $"+output_reg+" , "+var[0] + "($"+arr_size+")")
-        
-        
+            arr_size = get_free_reg("temp_"+arr_size.strip())
+            code_block.append("sw $"+output_reg+" , " +
+                              var[0] + "($"+arr_size+")")
+
         if not ("t_1" in var[0] or "t_0" in var[0]):
-          print("==================")
-          free_all_reg()
+            print("==================")
+            free_all_reg()
+    elif "IF_FALSE" in each:
+        var = re.split(r" +", each)
+
+        isArray = False
+        arr_size = 0
+
+        if "[" in var[1]:
+            arr_size = var[1][var[1].find("[")+1:var[1].find("]")]
+            var[1] = var[1][:var[1].find("[")].strip()
+            isArray = True
+
+        left_reg = ""
+        right_reg = ""
+
+        if var[1] in variables.keys():
+            left_reg = get_free_reg("var_"+var[1].strip())
+            if not isArray:
+                code_block.append("lw $"+left_reg+" , "+"var_"+var[1])
+            else:
+                code_block.append("lw $"+left_reg+" , " +
+                                  "var_"+var[1]+"("+arr_size+")")
+        else:
+            left_reg = get_free_reg("temp_"+var[1].strip())
+            if "_" not in var[1]:
+                code_block.append("li $"+left_reg+" , " + var[1])
+
+        if var[3] in variables.keys():
+            right_reg = get_free_reg("var_"+var[3].strip())
+            if not isArray:
+                code_block.append("lw $"+right_reg+" , "+"var_"+var[3])
+            else:
+                code_block.append("lw $"+right_reg+" , " +
+                                  "var_"+var[3]+"("+arr_size+")")
+        else:
+            right_reg = get_free_reg("temp_"+var[3].strip())
+            if "_" not in var[3]:
+                code_block.append("li $"+right_reg+" , " + var[3])
+
+        # reverse of instructions since if_false is being done
+        if var[2] == "==":
+            code_block.append("bne $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+        elif var[2] == "!=":
+            code_block.append("beq $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+        elif var[2] == ">":
+            code_block.append("ble $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+        elif var[2] == ">=":
+            code_block.append("blt $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+        elif var[2] == "<":
+            code_block.append("bge $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+        elif var[2] == "<=":
+            code_block.append("bgt $"+left_reg + " , $" +
+                              right_reg + " , " + var[5])
+    elif "GOTO" in each:
+        code_block.append(each.replace("GOTO", "j"))
     elif "Label_" in each:
         code_block.append(each)
+<<<<<<< HEAD
     elif "IF_FALSE" in each:
         code_block.append(1)
+=======
+    elif "print" in each:
+        var = each[each.find("print:") + 6:].strip()
+        var = var.split("+")
+        for v in var:
+            v = v.strip()
+            if '"' in v:
+                data_block.append("for_output" + str(str_num) + ":     .asciiz " + v)
+                code_block.append("li $v0 , 4")
+                code_block.append("la $a0 , for_output"+str(str_num))
+                str_num += 1
+                code_block.append("syscall")
+            elif v in variables:
+                code_block.append("li $v0 , 1")
+                code_block.append("lw $a0 , var_"+v)
+                code_block.append("syscall")
+            else:
+                code_block.append("li $v0 , 1")
+                code_block.append("li $a0 , "+v)
+                code_block.append("syscall")
+    elif "input" in each:
+        var = each[each.find("input:") + 6:].strip()
+       
+        if var in variables:
+            code_block.append("li $v0 , 5")
+            code_block.append("lw $a0 , var_"+var)
+            code_block.append("syscall")
+        else:
+            code_block.append("li $v0 , 1")
+            code_block.append("lw $a0 , ERROR")
+            code_block.append("syscall")
+
+>>>>>>> 1b858242cebc2d394418ee6568bd6f91ffc83418
 
 '''TODO: string add
 strcat = """
@@ -334,7 +424,7 @@ strcat_done:
             
 code_block.append(strcat)
 '''
-
+data_block.append("ERROR:     .asciiz \"Semantic Error\"\n")
 # generate and write into the .asm file
 output_mips.write(".data \n")
 for d in data_block:

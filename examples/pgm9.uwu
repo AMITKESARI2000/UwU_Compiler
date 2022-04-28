@@ -5,7 +5,7 @@ function main(){
   if(k == "hello"){
     i=0;
     loop(i<10){
-      print(k+"\n");
+      print("\n");
     }(i++)
   }else{
     i=0;

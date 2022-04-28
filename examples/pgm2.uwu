@@ -1,13 +1,18 @@
 
 function main() {
-    let ff = 10.0;
+    let ff = 20;
     let i = 5;
+    input(i);
+    
     $* something else *$
-    if(i < 10 && x == 20) {
+    if(i < ff && ff == 20) {
         i += 2;
     }
     else{
         i++;
     }
+    print(i + "\n");
+    print("output: " + ff + "\n");
+    print("input: " + i + "\n");
     $* ending loop with some test chars: ** @#$%^&*.|\! *$
 }@@@

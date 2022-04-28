@@ -126,6 +126,8 @@ CONST { insert_type(); } IDENTIFIER{ add('V',$3.name); } ASSIGN EXPR {
 									}
 									SEMICOL {ircode = $6.nd->code+" _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + (string)$6.nd->token; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
 IDENTIFIER ASSIGN EXPR SEMICOL { ircode = $3.nd->code+string($1.name) + " = " + $3.nd->token + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;}|
+									SEMICOL {ircode = " _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + $6.nd->code; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
+IDENTIFIER ASSIGN FUNCTIONCALL SEMICOL { ircode = string($1.name) + " = " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); }|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
 IDENTIFIER INCONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "INCREMENT", ircode); }|
@@ -135,9 +137,9 @@ ARRAY INCASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " +
 ARRAY DECASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY INCONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] + 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY DECONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-PRINT LPAREN EXPR RPAREN SEMICOL { ircode = $3.nd->code+"\nprint " + (string)$3.nd->token + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); irtempCount = 0;}|
-PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print return_value" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
-INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "syscall input \n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
+PRINT LPAREN EXPR RPAREN SEMICOL { ircode = $3.nd->code+"\nprint: " + (string)$3.nd->token + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); irtempCount = 0;}|
+PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print: return_value" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
+INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; irtempCount = 0;}|
 RETURN {add('K',$1.name); } EXPR SEMICOL{ 
@@ -148,14 +150,14 @@ FUNCTIONDEF |
 STOP SEMICOL{ 
 				 if(ender==-1)
 				 ender = irLabelCount++;
-				 ircode = "GOTO Label_"+to_string(ender);
+				 ircode = "GOTO Label_"+to_string(ender)+"\n";
 				 $$.nd=mknode(NULL,NULL,"STOP", ircode);
 				 irtempCount = 0;
 				  }|
 CONTINUE SEMICOL{ 
 					if(beginer==-1)
 					beginer = irLabelCount++;
-					ircode = "GOTO Label_"+to_string(beginer);
+					ircode = "GOTO Label_"+to_string(beginer)+"\n";
 					 $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); 
 					 irtempCount = 0;
 					 };
@@ -313,7 +315,6 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ;
 						iflastindex=$3.nd->trueLabel;
 					ircode += to_string(iflastindex) + "\n";  
 					add('K',$1.name); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-					cout<<"founr--------"<<endl;
 					ircode = ircode + $6.nd->code + "Label_" + to_string(iflastindex) +":\n"; 
 					$$.nd = mknode(iff, NULL, "if-else", ircode,iflastindex);
 					 }|
