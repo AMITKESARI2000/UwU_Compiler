@@ -4,6 +4,7 @@ import re
 ir_file = open('./output.uwuir', 'r')
 output_mips = open('./output.asm', 'w')
 
+str_num = 0
 code_parsed = []
 data_block = []
 code_block = []
@@ -285,9 +286,10 @@ for each in code_parsed:
         for v in var:
             v = v.strip()
             if '"' in v:
-                data_block.append("for_output:     .asciiz " + v)
+                data_block.append("for_output" + str(str_num) + ":     .asciiz " + v)
                 code_block.append("li $v0 , 4")
-                code_block.append("la $a0 , for_output")
+                code_block.append("la $a0 , for_output"+str(str_num))
+                str_num += 1
                 code_block.append("syscall")
             elif v in variables:
                 code_block.append("li $v0 , 1")
@@ -299,24 +301,15 @@ for each in code_parsed:
                 code_block.append("syscall")
     elif "input" in each:
         var = each[each.find("input:") + 6:].strip()
-        var = var.split("+")
-        for v in var:
-            v = v.strip()
-            if '"' in v:
-                data_block.append("for_output:     .asciiz " + v)
-                code_block.append("li $v0 , 4")
-                code_block.append("la $a0 , for_output")
-                code_block.append("syscall")
-            elif v in variables:
-                code_block.append("li $v0 , 1")
-                code_block.append("lw $a0 , var_"+v)
-                code_block.append("syscall")
-            else:
-                code_block.append("li $v0 , 1")
-                code_block.append("li $a0 , "+v)
-                code_block.append("syscall")
-
-        print(var)
+       
+        if var in variables:
+            code_block.append("li $v0 , 5")
+            code_block.append("lw $a0 , var_"+var)
+            code_block.append("syscall")
+        else:
+            code_block.append("li $v0 , 1")
+            code_block.append("lw $a0 , ERROR")
+            code_block.append("syscall")
 
 
 '''TODO: string add
@@ -426,7 +419,7 @@ strcat_done:
             
 code_block.append(strcat)
 '''
-
+data_block.append("ERROR:     .asciiz \"Semantic Error\"\n")
 # generate and write into the .asm file
 output_mips.write(".data \n")
 for d in data_block:

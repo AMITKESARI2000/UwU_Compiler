@@ -135,9 +135,9 @@ ARRAY INCASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " +
 ARRAY DECASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY INCONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] + 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 ARRAY DECONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-PRINT LPAREN EXPR RPAREN SEMICOL { ircode = "print " + $3.nd->code + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); }|
-PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = "print "+ $3.nd->code +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); }|
-INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "syscall input \n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
+PRINT LPAREN EXPR RPAREN SEMICOL { ircode = "print: " + $3.nd->code + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); }|
+PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = "print: "+ $3.nd->code +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); }|
+INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; }|
 RETURN {add('K',$1.name); } EXPR SEMICOL{ ircode = " return "; $1.nd = mknode(NULL, NULL, "Return", ircode); ircode = ircode + $3.nd->code + " GOTO NLINE\n"; $$.nd = mknode($1.nd, $3.nd, "RETURN", ircode); }|
@@ -146,13 +146,13 @@ FUNCTIONDEF |
 STOP SEMICOL{ 
 				 if(ender==-1)
 				 ender = irLabelCount++;
-				 ircode = "GOTO Label_"+to_string(ender);
+				 ircode = "GOTO Label_"+to_string(ender)+"\n";
 				 $$.nd=mknode(NULL,NULL,"STOP", ircode);
 				  }|
 CONTINUE SEMICOL{ 
 					if(beginer==-1)
 					beginer = irLabelCount++;
-					ircode = "GOTO Label_"+to_string(beginer);
+					ircode = "GOTO Label_"+to_string(beginer)+"\n";
 					 $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); 
 					 };
 

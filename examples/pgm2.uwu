@@ -11,7 +11,8 @@ function main() {
     else{
         i++;
     }
-    print(i);
-    print("output: " + ff);
+    print(i + "\n");
+    print("output: " + ff + "\n");
+    print("input: " + i + "\n");
     $* ending loop with some test chars: ** @#$%^&*.|\! *$
 }@@@
