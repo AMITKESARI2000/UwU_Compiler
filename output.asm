@@ -36,3 +36,7 @@ mul $t0 , $t0 , $t4
 li $v0 , 1
 lw $a0 , var_arr($t0)
 syscall
+li $v1 , 0
+li $t1 , 0
+add $t5 , $t1 , $zero
+j $ra

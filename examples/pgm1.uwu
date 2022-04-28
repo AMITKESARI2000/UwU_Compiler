@@ -8,4 +8,6 @@ function main () {
     hey  
     hello print *$
     print(arr[1]);
+    return 0;
+
 }@@@

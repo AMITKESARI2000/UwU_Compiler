@@ -138,11 +138,27 @@ for each in ir_file:
 
 # parse the TAC to MIPS
 for each in code_parsed:
-    if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each:
+    if "return_func" in each:
+        code_block.append("j $ra")
+    if "return_value" in each:
+        each = each.replace("return_value"," $v1 ")
+    if "_a" in each and "main" not in each:
+        var = each.split("_a")[-1].strip()
+        count = 4 
+        code_block.append("subu $sp,$sp,"+str(var)+" \nsw $ra,($sp)")
+        for i in range(int(var)):
+            code_block.append("sw $s0,"+str(4*i+4)+"($sp) ")
+    
+    if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each :
+       
         var = each.split("=")
-        
         var[0] = var[0].replace("_i", "").strip()
         var[1] = var[1].strip()
+        if "$" in each:
+            if(re.compile('^\s*\d+\s*$').search(var[1])):
+                code_block.append("li $v1"+" , "+var[1])
+            else:
+                code_block.append("add $v1"+" , $"+get_free_reg(var[1])+" , $zero")
 
         isArray = False
         arr_size = 0
@@ -418,6 +434,11 @@ done:
             code_block.append("li $v0 , 1")
             code_block.append("lw $a0 , ERROR")
             code_block.append("syscall")
+    elif "_*i" in each:
+        var = each.replace("_*i","").strip()
+        output = get_free_reg(var)
+        print(output)
+            
     elif "$ra" in each:
         code_block.append("")
 

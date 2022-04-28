@@ -15,4 +15,5 @@ function main() {
     print("output: " + ff + "\n");
     print("input: " + i + "\n");
     $* ending loop with some test chars: ** @#$%^&*.|\! *$
+    return 0;
 }@@@
