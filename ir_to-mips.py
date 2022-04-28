@@ -280,10 +280,6 @@ for each in code_parsed:
         code_block.append(each.replace("GOTO", "j"))
     elif "Label_" in each:
         code_block.append(each)
-<<<<<<< HEAD
-    elif "IF_FALSE" in each:
-        code_block.append(1)
-=======
     elif "print" in each:
         var = each[each.find("print:") + 6:].strip()
         var = var.split("+")
@@ -314,8 +310,9 @@ for each in code_parsed:
             code_block.append("li $v0 , 1")
             code_block.append("lw $a0 , ERROR")
             code_block.append("syscall")
+    elif "$ra" in each:
+        code_block.append("")
 
->>>>>>> 1b858242cebc2d394418ee6568bd6f91ffc83418
 
 '''TODO: string add
 strcat = """
