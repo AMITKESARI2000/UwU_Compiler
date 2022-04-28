@@ -35,7 +35,7 @@
     void printLevelorder(struct node *,int);
     struct node* mknode(struct node *left, struct node *right, char *token, string code);
 	struct node* mknode(struct node *left, struct node *right, char *token, string code,int Label);
-	string findArrIndex(string);
+	string findArrIndex(string, bool);
 	void writeIrToFile(string);
 
     struct dataType {
@@ -90,7 +90,6 @@
 %%
 
 program:  stment_seq {
-					cout<<"too-----"<<endl;
 					ircode = $1.nd->code;
 					 $$.nd=mknode($1.nd, NULL, "Program", ircode);
 					  head = $$.nd; writeIrToFile(ircode);
@@ -106,9 +105,8 @@ STATEMENT stment_seq {
 					ircode+= $2.nd->code;
 					 $$.nd=mknode($1.nd, $2.nd,"Statements", ircode );
 					  irtempCount = 0;
-					  cout<<"heretoo-----"<<$$.nd->code<<endl;
 					   }| 
-STATEMENT {$$.nd = $1.nd; irtempCount = 0;cout<<"heretoo-----"<<$1.nd->code<<endl;}|
+STATEMENT {$$.nd = $1.nd; irtempCount = 0;}|
 error SEMICOL {
 				error_lines.push_back(lines-1);
 } stment_seq
@@ -130,12 +128,23 @@ IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + stri
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
 IDENTIFIER INCONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "INCREMENT", ircode); }|
 IDENTIFIER DECONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "DECREMENT", ircode); }|
-ARRAY ASSIGN EXPR SEMICOL { ircode =  $3.nd->code+findArrIndex($1.nd->code) + " = " + (string)$3.nd->token + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;} |
-ARRAY INCASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] + "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-ARRAY DECASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-ARRAY INCONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] + 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-ARRAY DECONE SEMICOL { ircode = findArrIndex($1.nd->code) + " = " + curr_arr + "[t_0] - 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
-PRINT LPAREN EXPR2 RPAREN SEMICOL { ircode = "print: " + $3.nd->code + "\n"; $3.nd = mknode(NULL,NULL,$3.name, "print expr"); $$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); irtempCount = 0;}|
+ARRAY ASSIGN EXPR SEMICOL { ircode =  $3.nd->code+findArrIndex($1.nd->code,false) + " = " + (string)$3.nd->token + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;} |
+ARRAY INCASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code,false) + " = " + curr_arr + "[t_0] + "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
+ARRAY DECASSIGN VARIABLES SEMICOL { ircode = findArrIndex($1.nd->code,false) + " = " + curr_arr + "[t_0] - "  + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
+ARRAY INCONE SEMICOL { ircode = findArrIndex($1.nd->code,false) + " = " + curr_arr + "[t_0] + 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
+ARRAY DECONE SEMICOL { ircode = findArrIndex($1.nd->code,false) + " = " + curr_arr + "[t_0] - 1 \n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
+PRINT LPAREN EXPR2 RPAREN SEMICOL {
+	if($3.nd->code[0]=='t' && $3.nd->code[1]=='_' && $3.nd->code[2]=='0'){
+	
+		ircode = $3.nd->code;
+		
+	}else{
+		ircode = "print: " + $3.nd->code + "\n"; 
+	}
+		$3.nd = mknode(NULL,NULL,$3.name, "print expr"); 
+		$$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); 
+		irtempCount = 0;
+	}|
 PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print: return_value" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
 INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , 0\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 INPUT LPAREN IDENTIFIER COMMA NUMBER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , " + string($5.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
@@ -222,7 +231,7 @@ IDENTIFIER {ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, 
 STRING { add('C',strdup(yytext)); ircode = " " + string(yytext); $$.nd = mknode(NULL, NULL, string(yytext).data(), ircode); strcpy(datatype,"STRING"); }| 
 NUMBER { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"INT");}| 
 FLOAT  { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"FLOAT");}| 
-ARRAY; 
+ARRAY { add('A',$1.name); ircode =  findArrIndex($1.nd->code,true) + "\n"; $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"ARRAY");};
 
 PARAMS:
 PARAMS COMMA VARIABLES{
@@ -264,18 +273,17 @@ EXPR:
 LPAREN EXPR RPAREN { $$.nd = $2.nd; } |
 EXPR arithmetic VARIABLES { 
 							int val1=irtempCount++;
-							ircode = $1.nd->code+"\nt_"+to_string(val1)+" = "+$1.nd->token+$2.nd->code+$3.nd->code+"\n";
-							string s = "t_"+to_string(val1);
+							ircode = $1.nd->code+"\ntt_"+to_string(val1)+" = "+$1.nd->token+$2.nd->code+$3.nd->code+"\n";
+							string s = "tt_"+to_string(val1);
 							 $$.nd = mknode($1.nd, $3.nd, s.data(), ircode);
 							 }|
 EXPR arithmetic FUNCTIONCALL { 
 							int val1 = irtempCount++;
-							ircode = $3.nd->code+$1.nd->code+"\nt_"+to_string(val1)+" = "+$1.nd->token+$2.nd->code+" return value\n";
-						 	string s = "t_"+to_string(val1);
+							ircode = $3.nd->code+$1.nd->code+"\ntt_"+to_string(val1)+" = "+$1.nd->token+$2.nd->code+" return value\n";
+						 	string s = "tt_"+to_string(val1);
 							$$.nd = mknode($1.nd, $3.nd, s.data(), ircode);
 						 }|
 VARIABLES { 
-	cout<<"5424------------"<<endl;
 			ircode = "";
 			$$.nd = mknode(NULL,NULL,$1.nd->token,ircode);} |
 IDENTIFIER INCONE { $$.nd = $1.nd; } |
@@ -284,7 +292,7 @@ IDENTIFIER DECONE { $$.nd = $1.nd; };
 BOOLEANS:
 EXPR EQ VARIABLES {ircode = (string)$1.nd->token + " == " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, "==", ircode);}|
 EXPR NE VARIABLES {ircode = (string)$1.nd->token + " != " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, "!=", ircode);}|
-EXPR LT VARIABLES {cout<<"5424------------"<<endl;ircode = (string)$1.nd->token + " < " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, "<", ircode);}|
+EXPR LT VARIABLES {ircode = (string)$1.nd->token + " < " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, "<", ircode);}|
 EXPR LE VARIABLES {ircode = (string)$1.nd->token + " <= " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, "<=", ircode);}|
 EXPR GT VARIABLES {ircode = (string)$1.nd->token + " > " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, ">", ircode);}|
 EXPR GE VARIABLES {ircode = (string)$1.nd->token + " >= " + $3.nd->code + " "; $$.nd = mknode($1.nd, $3.nd, ">=", ircode);}
@@ -309,7 +317,7 @@ CONDITION XOR BOOLEANS {
 						$2.nd = mknode(NULL, NULL, "XOR", "^"); 
 						$$.nd = mknode($1.nd, $3.nd, $2.name, ircode);
 						}|
-BOOLEANS { cout<<"here---------"<<endl; $$.nd = $1.nd;}|
+BOOLEANS {  $$.nd = $1.nd;}|
 NEG BOOLEANS {
 						ircode = "!" + $2.nd->code; 
 						$1.nd = mknode(NULL, NULL, "NEG", "!"); 
@@ -377,7 +385,7 @@ IDENTIFIER DECONE { ircode = string($1.name) + " = " + string($1.name) + " - 1" 
 
 Loop:
 LOOP { add('K',$1.name); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LPAREN INCREMENT RPAREN { 
-											cout<<"ghfgvhb----"<<endl;
+											
 											int loopstart,loopend;
 											if(beginer==-1)
 											beginer = irLabelCount++;
@@ -589,7 +597,7 @@ void insert_type() {
 	strcpy(type, yytext);
 }
 
-string findArrIndex(string code){
+string findArrIndex(string code, bool isPrint = false){
 	string delimiter = " : ";
 	int name_idx = code.find(delimiter);
 	string arrName =  code.substr(0, name_idx);
@@ -599,13 +607,13 @@ string findArrIndex(string code){
 	
 	int i=0;
 	for(i=0; i < count; i++){
-		if(string(symbolTable[i].data_type).find(arrName + " :") != std::string::npos){
-			main_dim = get_dim(string(symbolTable[i].data_type));
+		if(string(symbolTable[i].id_name) == arrName+" "){
+			main_dim = get_dim(arrName+" :"+string(symbolTable[i].data_type));
 			if(main_dim.size() != array_dim.size()){
 				cout << "Array index dimension values mismatch!" << endl;
 				exit(0);
 			}
-			
+			break;
 		}
 	}
 	
@@ -613,11 +621,10 @@ string findArrIndex(string code){
 	int finalUnrolledIndex = 0, currDimSize = 1;
 	arrDimIrCode += "t_0 = 0 \n";
 	arrDimIrCode += "t_1 = 1 \n";
+	
+
 	for(int i = main_dim.size() - 1; i >= 0; i--){
-		// if(main_dim[i] <= array_dim[i]){
-		// 	cout << "Index out of bound for dimension!" << endl;
-		// 	exit(0);
-		// }
+		
 
 		arrDimIrCode += "t_0 = t_0 + t_1 * " + array_dim[i] + "\n";
 		arrDimIrCode += "t_1 = t_1 * " + main_dim[i] + "\n";
@@ -625,17 +632,22 @@ string findArrIndex(string code){
 		// finalUnrolledIndex += currDimSize * array_dim[i];
 		// currDimSize *= main_dim[i];
 	}
-	arrDimIrCode += arrName + " [t_0]";
-
+	if(isPrint){
+		arrDimIrCode += "t_0 = t_0 * 4";
+		arrDimIrCode += "print: " + arrName + " [t_0]";
+	}else{
+		arrDimIrCode += "t_0 = t_0 * 4";
+		arrDimIrCode += arrName + " [t_0]";
+	}
 	return arrDimIrCode;
 }
 
 vector<string> get_dim(string code){
 	int name_idx = code.find(" : ");
+	
 	name_idx += 3;
 	vector<string> array_dim;
 	string dim="";
-
 	while(name_idx < code.size()){
 		if(code[name_idx]=='x'){
 			array_dim.push_back(dim);
@@ -646,6 +658,7 @@ vector<string> get_dim(string code){
 		name_idx ++;
 	}
 	array_dim.push_back(dim);
+	
 	return array_dim;
 }
 

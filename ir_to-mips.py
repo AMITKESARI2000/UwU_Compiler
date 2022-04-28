@@ -66,6 +66,8 @@ def free_all_reg():
 def get_free_reg(var_name):
 
     for key in registers.keys():
+        print("matched found ??",
+              registers[key][1], var_name, registers[key][1] == var_name.strip())
         if registers[key][1] == var_name.strip():
             return key
 
@@ -119,6 +121,7 @@ for each in ir_file:
 for each in code_parsed:
     if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each:
         var = each.split("=")
+        
         var[0] = var[0].replace("_i", "").strip()
         var[1] = var[1].strip()
 
@@ -138,6 +141,7 @@ for each in code_parsed:
             code_block.append("lw $"+output_reg+" , "+"var_"+var[0])
         else:
             output_reg = get_free_reg("temp_"+var[0].strip())
+
 
         expr_var = var[1].split('+', 1)
 
@@ -214,12 +218,15 @@ for each in code_parsed:
 
         if isArray:
             arr_size = get_free_reg("temp_"+arr_size.strip())
-            code_block.append("sw $"+output_reg+" , " +
+            
+            output_reg = get_free_reg("temp_"+var[1])
+            code_block.append("sw $"+output_reg+" , var_" +
                               var[0] + "($"+arr_size+")")
 
         if not ("t_1" in var[0] or "t_0" in var[0]):
-            print("==================")
+            print("==================",var[0])
             free_all_reg()
+
     elif "IF_FALSE" in each:
         var = re.split(r" +", each)
 
@@ -283,7 +290,14 @@ for each in code_parsed:
         code_block.append(each)
     elif "print" in each:
         var = each[each.find("print:") + 6:].strip()
+        if "[" in each:
+          reg = get_free_reg("temp_t_0")
+          code_block.append("li $v0 , 1")
+          code_block.append("lw $a0 , var_"+var[0:var.find("[")].strip()+"($"+ reg + ")")
+          code_block.append("syscall")
+          continue
         var = var.split("+")
+
         for v in var:
             v = v.strip()
             if '"' in v:
