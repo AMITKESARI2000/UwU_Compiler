@@ -301,7 +301,6 @@ for each in code_parsed:
                 code_block.append("syscall")
     elif "input" in each:
         var = each[each.find("input:") + 6:].strip()
-       
         if var in variables:
             code_block.append("li $v0 , 5")
             code_block.append("lw $a0 , var_"+var)
