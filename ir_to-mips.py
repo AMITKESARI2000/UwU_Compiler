@@ -80,6 +80,25 @@ def get_free_reg(var_name):
     return free_reg()
 
 
+def get_asciiz_var(expr_var):
+    for dataline in data_block:
+        if expr_var in dataline:
+            return dataline.split(":", 1)[0]
+
+
+def get_var_type(variable_name):
+    if "var_" not in variable_name:
+        variable_name = "var_" + variable_name
+    for dataline in data_block:
+        if variable_name in dataline:
+            if "word" in dataline:
+                return "word"
+            elif "asciiz" in dataline:
+                return "asciiz"
+            elif "space" in dataline:
+                return "space"
+
+
 # parse the labels and the data section
 for each in ir_file:
     if("_i" in each):
@@ -136,11 +155,17 @@ for each in code_parsed:
         output_reg = ""
         expr_reg = []
 
+        var[0] = var[0].strip()
         if var[0] in variables.keys() and not isArray:
-            output_reg = get_free_reg("var_"+var[0].strip())
-            code_block.append("lw $"+output_reg+" , "+"var_"+var[0])
+            output_reg = get_free_reg("var_"+var[0])
+
+            var_type = get_var_type(var[0])
+            if var_type == "asciiz":
+                code_block.append("la $"+output_reg+" , "+"var_"+var[0])
+            else:
+                code_block.append("lw $"+output_reg+" , "+"var_"+var[0])
         else:
-            output_reg = get_free_reg("temp_"+var[0].strip())
+            output_reg = get_free_reg("temp_"+var[0])
 
 
         expr_var = var[1].split('+', 1)
@@ -170,16 +195,53 @@ for each in code_parsed:
                     expr_reg.append(expr_reg__)
                 else:
                     # normal addition expression
-                    exp = exp.strip()
-                    # print("========",exp,variables.keys())
-                    if exp in variables.keys():
-                        expr_reg_ = get_free_reg("var_"+exp.strip())
-                        code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
-                    else:
-                        expr_reg_ = get_free_reg("temp_"+exp.strip())
-                        if "_" not in exp:
-                            code_block.append("li $"+expr_reg_+" , "+exp)
-                    expr_reg.append(expr_reg_)
+                  exp = exp.strip()
+                  if exp in variables.keys():
+                      expr_reg_ = get_free_reg("var_"+exp.strip())
+                      code_block.append("lw $"+expr_reg_+" , "+"var_"+exp)
+                  else:
+                      expr_reg_ = get_free_reg("temp_"+exp.strip())
+                      if "_" not in exp:
+                          code_block.append("li $"+expr_reg_+" , "+exp)
+                  expr_reg.append(expr_reg_)
+
+            var_type1 = get_var_type(registers[expr_reg[0]][1])
+            var_type2 = get_var_type(registers[expr_reg[1]][1])
+            if var_type1 == "asciiz" or var_type2 == "asciiz":
+              #   convert data block type of var_c
+              asciiz_var = registers[output_reg][1]
+              for i in range(len(data_block)):
+                if asciiz_var in data_block[i] and "word" in data_block[i]:
+                  convert_to_str = re.split(r" +", data_block[i])[-1].strip()
+
+                  data_block[i] = data_block[i].split(".word")[0]
+                  data_block[i] += ".asciiz \"" + convert_to_str + "\""
+              #  use concat string
+              code_block.append("la $a0 , " + registers[expr_reg[0]][1])
+              code_block.append("la $a1 , " + registers[expr_reg[1]][1])
+              code_block.append("la $a2 , " + registers[output_reg][1])
+              strcat = """
+concat:
+    lb $t0, 0($a0)          
+    beq $t0, $0, string2    
+    sb $t0, 0($a2)          
+    addi $a0, $a0, 1        
+    addi $a2, $a2, 1        
+    j concat     
+
+string2:
+    lb $t0, 0($a1)          
+    beq $t0, $0, done       
+    sb $t0, 0($a2)          
+    addi $a1, $a1, 1        
+    addi $a2, $a2, 1        
+    j string2    
+
+done:
+    sb $0, 0($a2)
+
+                """
+              code_block.append(strcat)
 
             code_block.append("add $"+output_reg+" , $" +
                               expr_reg[0] + " , $" + expr_reg[1])
@@ -209,12 +271,24 @@ for each in code_parsed:
                     expr_reg_ = get_free_reg("var_"+expr_var[0].strip())
                     code_block.append("lw $"+expr_reg_ +
                                       " , "+"var_"+expr_var[0])
+                    expr_reg.append(expr_reg_)
+                    code_block.append("add $"+output_reg+" , $" +
+                                      expr_reg[0] + " , $zero")
                 elif not isArray:
-                    expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
-                    code_block.append("li $"+expr_reg_+" , "+expr_var[0])
-                expr_reg.append(expr_reg_)
-                code_block.append("add $"+output_reg+" , $" +
-                                  expr_reg[0] + " , $zero")
+                    if '"' in expr_var[0]:
+                        #   if its a string don't do li
+                        print()
+                        # expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
+                        # asciiz_var = get_asciiz_var(expr_var[0])
+                        # code_block.append("la $"+expr_reg_+" , "+asciiz_var)
+                        # expr_reg.append(expr_reg_)
+
+                    else:
+                        expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
+                        code_block.append("li $"+expr_reg_+" , "+expr_var[0])
+                        expr_reg.append(expr_reg_)
+                        code_block.append("add $"+output_reg+" , $" +
+                                          expr_reg[0] + " , $zero")
 
         if isArray:
             arr_size = get_free_reg("temp_"+arr_size.strip())

@@ -1,6 +1,5 @@
 .data 
 var_arr:    .space 16
-var_a:    .word 0
 ERROR:     .asciiz "Semantic Error"
 
 .text 
@@ -20,11 +19,9 @@ mul $t6 , $t5 , $t6
 add $t3 , $t3 , $t6
 li $t7 ,  4
 mul $t5 , $t5 , $t7
-mul $t3 , $t3 , $t8
-lw $t9 , var_a
-li $t1 , 10
-add $t9 , $t1 , $zero
-sw $t9 , var_a
+li $t7 ,  4
+mul $t3 , $t3 , $t7
+sw $t0 , var_arr($t3)
 li $t1 , 0
 add $t0 , $t1 , $zero
 li $t3 , 1
@@ -34,9 +31,8 @@ mul $t3 , $t2 , $t3
 add $t0 , $t0 , $t3
 li $t4 ,  4
 mul $t2 , $t2 , $t4
-mul $t0 , $t0 , $t5
-lw $t6 , var_a
-lw $t6 , var_a
-li $t3 , 1
-add $t6 , $t6 , $t3
-sw $t6 , var_a
+li $t4 ,  4
+mul $t0 , $t0 , $t4
+li $v0 , 1
+lw $a0 , var_arr($t0)
+syscall

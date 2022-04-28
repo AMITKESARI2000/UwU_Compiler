@@ -633,10 +633,10 @@ string findArrIndex(string code, bool isPrint = false){
 		// currDimSize *= main_dim[i];
 	}
 	if(isPrint){
-		arrDimIrCode += "t_0 = t_0 * 4";
+		arrDimIrCode += "t_0 = t_0 * 4\n";
 		arrDimIrCode += "print: " + arrName + " [t_0]";
 	}else{
-		arrDimIrCode += "t_0 = t_0 * 4";
+		arrDimIrCode += "t_0 = t_0 * 4\n";
 		arrDimIrCode += arrName + " [t_0]";
 	}
 	return arrDimIrCode;
