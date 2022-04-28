@@ -66,8 +66,6 @@ def free_all_reg():
 def get_free_reg(var_name):
 
     for key in registers.keys():
-        print("matched found ??",
-              registers[key][1], var_name, registers[key][1] == var_name.strip())
         if registers[key][1] == var_name.strip():
             return key
 
@@ -292,8 +290,13 @@ done:
 
         if isArray:
             arr_size = get_free_reg("temp_"+arr_size.strip())
-            
-            output_reg = get_free_reg("temp_"+var[1])
+            if "_" in var[1]:
+              output_reg = get_free_reg("temp_"+var[1])
+            else:
+
+              output_reg = get_free_reg("temp_"+var[1])
+              code_block.append("li $"+output_reg+" , "+var[1])
+              
             code_block.append("sw $"+output_reg+" , var_" +
                               var[0] + "($"+arr_size+")")
 
