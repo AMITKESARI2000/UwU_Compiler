@@ -146,13 +146,13 @@ FUNCTIONDEF |
 STOP SEMICOL{ 
 				 if(ender==-1)
 				 ender = irLabelCount++;
-				 ircode = "GOTO L"+to_string(ender);
+				 ircode = "GOTO Label_"+to_string(ender);
 				 $$.nd=mknode(NULL,NULL,"STOP", ircode);
 				  }|
 CONTINUE SEMICOL{ 
 					if(beginer==-1)
 					beginer = irLabelCount++;
-					ircode = "GOTO L"+to_string(beginer);
+					ircode = "GOTO Label_"+to_string(beginer);
 					 $$.nd=mknode(NULL,NULL,"CONTINUE", ircode); 
 					 };
 
@@ -291,7 +291,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN { int iflastindex ;
 						iflastindex=$3.nd->trueLabel;
 					ircode += to_string(irLabelCount++) + "\n";  
 					add('K',$1.name); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-					ircode = ircode + $6.nd->code + "L" + to_string(iflastindex) +":\n"; 
+					ircode = ircode + $6.nd->code + "Label_" + to_string(iflastindex) +":\n"; 
 					$$.nd = mknode(iff, NULL, "if-else", ircode,iflastindex);
 					 }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RCPAREN { 
@@ -317,9 +317,9 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{
 											elseend = $9.nd->trueLabel;
 										else
 											elseend = irLabelCount++;
-										ircode = "IF_FALSE " + $3.nd->code + " GOTO " + "L" + to_string(iflastindex) + " \n" + $6.nd->code + "\n" + "GOTO L" + to_string(elseend)+"\n";
+										ircode = "IF_FALSE " + $3.nd->code + " GOTO " + "Label_" + to_string(iflastindex) + " \n" + $6.nd->code + "\n" + "GOTO Label_" + to_string(elseend)+"\n";
 										add('K',$1.name); struct node *iff = mknode($3.nd, $6.nd, "IF", ircode);
-										ircode = ircode +"L"+to_string(iflastindex)+ ": " + $9.nd->code ;
+										ircode = ircode +"Label_"+to_string(iflastindex)+ ": " + $9.nd->code ;
 										$$.nd = mknode(iff, $9.nd, "if-else-if", ircode,elseend);
 										};
 
@@ -344,7 +344,7 @@ LOOP { add('K',$1.name); } LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN LP
 											if(ender==-1)
 											ender = irLabelCount++;
 											loopstart=beginer,loopend=ender;
-											ircode = "L"+to_string(loopstart)+": "+"IF_FALSE " + $4.nd->code +"GOTO L"+to_string(loopend)+"\n";
+											ircode = "Label_"+to_string(loopstart)+": "+"IF_FALSE " + $4.nd->code +"GOTO Label_"+to_string(loopend)+"\n";
 											struct node *temp = mknode($4.nd, $10.nd, "CONDITION", ircode); 
 											ircode = ircode + $7.nd->code+ $10.nd->code + "\n GOTO Label_"+to_string(loopstart)+"\n Label_"+to_string(loopend)+": \n"; 
 											$$.nd = mknode(temp, $7.nd, $1.name, ircode);
