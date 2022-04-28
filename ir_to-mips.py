@@ -224,6 +224,8 @@ for each in code_parsed:
           free_all_reg()
     elif "Label_" in each:
         code_block.append(each)
+    elif "IF_FALSE" in each:
+        code_block.append(1)
 
 '''TODO: string add
 strcat = """
