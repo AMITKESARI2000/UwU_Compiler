@@ -126,8 +126,6 @@ CONST { insert_type(); } IDENTIFIER{ add('V',$3.name); } ASSIGN EXPR {
 									}
 									SEMICOL {ircode = $6.nd->code+" _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + (string)$6.nd->token; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
 IDENTIFIER ASSIGN EXPR SEMICOL { ircode = $3.nd->code+string($1.name) + " = " + $3.nd->token + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;}|
-									SEMICOL {ircode = " _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + $6.nd->code; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
-IDENTIFIER ASSIGN FUNCTIONCALL SEMICOL { ircode = string($1.name) + " = " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); }|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
 IDENTIFIER INCONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "INCREMENT", ircode); }|

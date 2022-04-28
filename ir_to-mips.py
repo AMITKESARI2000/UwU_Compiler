@@ -309,6 +309,8 @@ for each in code_parsed:
             code_block.append("li $v0 , 1")
             code_block.append("lw $a0 , ERROR")
             code_block.append("syscall")
+    elif "$ra" in each:
+        code_block.append("")
 
 
 '''TODO: string add
