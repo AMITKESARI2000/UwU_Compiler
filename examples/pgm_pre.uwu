@@ -1,0 +1,5 @@
+function say_hi_from_out(){
+  print("hi\n");
+
+  return 0;
+}

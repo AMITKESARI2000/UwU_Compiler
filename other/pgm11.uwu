@@ -1,0 +1,10 @@
+function main(){
+  let i = 4;
+  let j = 6;
+  let t;
+  print(i+" "+j);
+  t=i;
+  i=j;
+  j=t;
+  print(i+" "+j);
+}

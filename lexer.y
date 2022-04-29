@@ -47,6 +47,7 @@
     int count=0;
     int q;
 	char datatype [10];
+	int param_count=0;
     char type[10];
     extern int countn;
 	string curr_arr;
@@ -85,7 +86,7 @@
 %right <nd_obj> NEG
 %token <nd_obj> REM BITAND BITOR XOR AND OR LPAREN RPAREN LSPAREN RSPAREN error
 %token <nd_obj> LCPAREN RCPAREN NUMBER FLOAT IDENTIFIER SEMICOL COMMA 
-%type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS EXPR EXPR2 BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONCALL2 FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
+%type  <nd_obj> program stment_seq STATEMENT ARRAY VARIABLES arithmetic PARAMS PARAMS2  EXPR EXPR2 BOOLEANS CONDITION CONDITIONAL_STAMENT FUNCTIONCALL FUNCTIONCALL2 FUNCTIONDEF INCREMENT Loop END_DECL TYPE_DECL 
 
 %%
 
@@ -124,6 +125,7 @@ CONST { insert_type(); } IDENTIFIER{ add('V',$3.name); } ASSIGN EXPR {
 									}
 									SEMICOL {ircode = $6.nd->code+" _c " + $3.nd->code; $3.nd=mknode(NULL,NULL,$3.name, ircode); ircode = ircode + (string)$6.nd->token; $$.nd=mknode($3.nd, $6.nd,"Const_declaration", ircode);}|
 IDENTIFIER ASSIGN EXPR SEMICOL { ircode = $3.nd->code+string($1.name) + " = " + $3.nd->token + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;}|
+IDENTIFIER ASSIGN FUNCTIONCALL SEMICOL{ircode = $3.nd->code+string($1.name) + " = " + "$v1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "=", ircode); irtempCount = 0;}|
 IDENTIFIER INCASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "+=", ircode); }|
 IDENTIFIER DECASSIGN VARIABLES SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " - " + $3.nd->code + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $$.nd = mknode($1.nd, $3.nd, "-=", ircode); }|
 IDENTIFIER INCONE SEMICOL { ircode = string($1.name) + " = " + string($1.name) + " + 1" + "\n"; $1.nd = mknode(NULL, NULL, $1.name, $1.name); $2.nd = mknode(NULL, NULL, $2.name, "1"); $$.nd = mknode($1.nd, $2.nd, "INCREMENT", ircode); }|
@@ -145,15 +147,18 @@ PRINT LPAREN EXPR2 RPAREN SEMICOL {
 		$$.nd = mknode(NULL,$3.nd,"Print_expr", ircode); 
 		irtempCount = 0;
 	}|
-PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print: return_value" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
+PRINT LPAREN FUNCTIONCALL RPAREN SEMICOL { ircode = $3.nd->code+"print: $v1" +"\n"; $3.nd = mknode(NULL,NULL,$3.name, "functioncall "); $$.nd = mknode(NULL,$3.nd,"Print_functionvalue", ircode); irtempCount = 0;}|
 INPUT LPAREN IDENTIFIER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , 0\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 INPUT LPAREN IDENTIFIER COMMA NUMBER RPAREN SEMICOL { ircode = "input: "+string($3.name) + " , " + string($5.name) + "\n"; $3.nd = mknode(NULL,NULL,$3.name, $3.name); $$.nd = mknode(NULL,$3.nd,"Input", ircode); }|
 CONDITIONAL_STAMENT{ $$.nd=$1.nd; } |
 Loop { $$.nd=$1.nd; irtempCount = 0;}|
 RETURN {add('K',$1.name); } EXPR SEMICOL{ 
-							ircode = $3.nd->code+"\n$ra = "+$3.nd->token+" \nreturn $ra\n";
+							ircode = $3.nd->code+"\n$v1 = "+$3.nd->token+" \nreturn_func\n";
 							$$.nd = mknode($1.nd, $3.nd, "RETURN", ircode); irtempCount = 0;}|
-FUNCTIONCALL SEMICOL { $$.nd=$1.nd; ircode = "GOTO " + $1.nd->code.substr(0, $1.nd->code.size()-2);  $1.nd->code = ircode; irtempCount = 0;}|
+FUNCTIONCALL SEMICOL { 
+						ircode = "GOTO Label_" + (string)$1.nd->token+"\n";
+						irtempCount = 0;
+						$$.nd=mknode(NULL,NULL,$1.nd->token,ircode);}|
 FUNCTIONDEF |
 STOP SEMICOL{ 
 				 if(ender==-1)
@@ -233,9 +238,10 @@ NUMBER { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, 
 FLOAT  { add('C',$1.name); ircode = " " + string($1.name); $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"FLOAT");}| 
 ARRAY { add('A',$1.name); ircode =  findArrIndex($1.nd->code,true) + "\n"; $$.nd = mknode(NULL, NULL, $1.name, ircode); strcpy(datatype,"ARRAY");};
 
+
 PARAMS:
 PARAMS COMMA VARIABLES{
-			ircode = $1.nd->code+"\n p_ " + $2.name;
+			ircode = $1.nd->code+"\n p_ " + $3.name;
 			$$.nd= mknode(NULL,NULL,"params",ircode);
 		} |
 EXPR {
@@ -244,7 +250,23 @@ EXPR {
 		}|
 FUNCTIONCALL	{}
 
- |{}
+ |{$$.nd= mknode(NULL,NULL,"params","");}
+;
+
+PARAMS2:
+PARAMS2 COMMA VARIABLES{
+			ircode = "_*i " + (string)$3.name+"\n"+$1.nd->code;
+			$$.nd= mknode(NULL,NULL,"params2",ircode);
+			param_count++;
+		} |
+EXPR {
+		ircode = "_*i " + (string)$1.nd->token+"\n"+$1.nd->code;
+		$$.nd= mknode(NULL,NULL,"params",ircode);
+		param_count++;
+		}|
+FUNCTIONCALL	{param_count++;}
+
+ |{$$.nd= mknode(NULL,NULL,"params","");}
 ;
 
 arithmetic:
@@ -347,7 +369,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RC
 										elseend = irLabelCount++;
 										ircode += to_string(iflastindex) + " \n"; add('K',$1.name); 
 										struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":";
+										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":\n";
 										$$.nd = mknode(iff, $10.nd, "if-else", ircode,elseend);
 										    }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ 
@@ -372,7 +394,7 @@ IDENTIFIER LPAREN PARAMS RPAREN {ircode =  $3.nd->code+"\nGOTO Label_" + string(
 MAIN LPAREN PARAMS RPAREN{ircode = "Label_main: "; $$.nd=mknode(NULL,NULL,$1.name, ircode);};
 
 FUNCTIONCALL2:
-IDENTIFIER LPAREN PARAMS RPAREN{ircode = "Label_" + string($1.name)+": "; $$.nd=mknode(NULL,NULL,$1.name, ircode);}|
+IDENTIFIER LPAREN PARAMS2 RPAREN{ircode = "Label_" + string($1.name)+": "+"_a "+to_string(param_count)+"\n"+$3.nd->code; $$.nd=mknode(NULL,NULL,$1.name, ircode);param_count=0;}|
 MAIN LPAREN PARAMS RPAREN{ircode = "Label_main: "; $$.nd=mknode(NULL,NULL,$1.name, ircode);};
 
 FUNCTIONDEF:
@@ -422,7 +444,7 @@ int main(int argc, char *argv[])
 		std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
 		// printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
 	}
-	printtree(head);
+	// printtree(head);
 	for(i=0;i<count;i++){
 		free(symbolTable[i].id_name);
 		free(symbolTable[i].type);

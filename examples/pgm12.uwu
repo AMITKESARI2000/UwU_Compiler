@@ -1,6 +1,0 @@
-function main(){
-  let i = 4;
-  let ans;
-  ans= 3.14*i*i;
-  print("Area of circle is "+ans);
-}

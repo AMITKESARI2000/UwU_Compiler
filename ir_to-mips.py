@@ -66,12 +66,12 @@ def free_all_reg():
 def get_free_reg(var_name):
 
     for key in registers.keys():
-        print("matched found ??",
-              registers[key][1], var_name, registers[key][1] == var_name.strip())
+        
         if registers[key][1] == var_name.strip():
             return key
 
     for key in registers.keys():
+
         if registers[key][0] == True:
             registers[key] = [False, var_name, 0]
             return key
@@ -138,11 +138,27 @@ for each in ir_file:
 
 # parse the TAC to MIPS
 for each in code_parsed:
-    if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each:
+    if "return_func" in each:
+        code_block.append("j $ra")
+    if "return_value" in each:
+        each = each.replace("return_value"," $v1 ")
+    if "_a" in each and "main" not in each:
+        var = each.split("_a")[-1].strip()
+        count = 4 
+        code_block.append("subu $sp,$sp,"+str(var)+" \nsw $ra,($sp)")
+        for i in range(int(var)):
+            code_block.append("sw $s0,"+str(4*i+4)+"($sp) ")
+    
+    if "=" in each and "==" not in each and "!=" not in each and ">=" not in each and "<=" not in each :
+       
         var = each.split("=")
-        
         var[0] = var[0].replace("_i", "").strip()
         var[1] = var[1].strip()
+        if "$" in each:
+            if(re.compile('^\s*\d+\s*$').search(var[1])):
+                code_block.append("li $v1"+" , "+var[1])
+            else:
+                code_block.append("add $v1"+" , $"+get_free_reg(var[1])+" , $zero")
 
         isArray = False
         arr_size = 0
@@ -178,10 +194,11 @@ for each in code_parsed:
                     new_exp = exp.split("*")
                     expr_reg1 = []
                     for exp_ in new_exp:
-                        if exp_ in variables.keys() and not isArray:
+                        
+                        if exp_.strip() in variables.keys() and not isArray:
                             expr_reg__ = get_free_reg("var_"+exp_.strip())
                             code_block.append(
-                                "lw $"+expr_reg__+" , "+"var_"+exp_)
+                                "lw $"+expr_reg__+" , "+"var_"+exp_.strip())
                         elif not isArray:
                             expr_reg__ = get_free_reg("temp_"+exp_.strip())
 
@@ -285,20 +302,30 @@ done:
 
                     else:
                         expr_reg_ = get_free_reg("temp_"+expr_var[0].strip())
-                        code_block.append("li $"+expr_reg_+" , "+expr_var[0])
+                        if "_" not in expr_var[0]:
+                            code_block.append("li $"+expr_reg_+" , "+expr_var[0])
                         expr_reg.append(expr_reg_)
                         code_block.append("add $"+output_reg+" , $" +
                                           expr_reg[0] + " , $zero")
 
         if isArray:
             arr_size = get_free_reg("temp_"+arr_size.strip())
-            
-            output_reg = get_free_reg("temp_"+var[1])
+            if var[1].strip() in variables.keys():
+                expr_reg__ = get_free_reg("var_"+var[1].strip())
+                code_block.append(
+                    "lw $"+expr_reg__+" , "+"var_"+var[1].strip())
+            elif "_" in var[1]:
+              output_reg = get_free_reg("temp_"+var[1])
+            else:
+
+              output_reg = get_free_reg("temp_"+var[1])
+              code_block.append("li $"+output_reg+" , "+var[1])
+              
             code_block.append("sw $"+output_reg+" , var_" +
                               var[0] + "($"+arr_size+")")
 
         if not ("t_1" in var[0] or "t_0" in var[0]):
-            print("==================",var[0])
+            
             free_all_reg()
 
     elif "IF_FALSE" in each:
@@ -398,7 +425,7 @@ done:
         var = var.split(",")
         var[0] = var[0].strip()
         var[1] = var[1].strip()
-        print(var)
+        
         if var[0] in variables:
           if var[1] == "0":
             code_block.append("li $v0 , 5")
@@ -418,117 +445,15 @@ done:
             code_block.append("li $v0 , 1")
             code_block.append("lw $a0 , ERROR")
             code_block.append("syscall")
+    elif "_*i" in each:
+        var = each.replace("_*i","").strip()
+        output = get_free_reg(var)
+        print(output)
+            
     elif "$ra" in each:
         code_block.append("")
 
 
-'''TODO: string add
-strcat = """
-blt     $s0, $s1, string1_short
-    la      $a1, string1
-    jal     strcat
-
-    la      $a1, string2
-    jal     strcat
-
-    j       print_full
-    string1_short:
-    # string 2 is longer -- append to output
-    la      $a1,string2
-    jal     strcat
-
-    # string 1 is shorter -- append to output
-    la      $a1,string1
-    jal     strcat
-
-# show results
-print_full:
-    # output the prefix message for the full string
-    li      $v0,4
-    la      $a0,full
-    syscall
-
-    # output the combined string
-    li      $v0,4
-    la      $a0,string3
-    syscall
-
-    # finish the line
-    li      $v0,4
-    la      $a0,newline
-    syscall
-
-    li      $v0,10
-    syscall
-
-# prompt -- prompt user for string
-#
-# RETURNS:
-#   v0 -- length of string (with newline stripped)
-#
-# arguments:
-#   a0 -- address of prompt string
-#   a1 -- address of string buffer
-#
-# clobbers:
-#   v1 -- holds ASCII for newline
-prompt:
-    # output the prompt
-    li      $v0,4                   # syscall to print string
-    syscall
-
-    # get string from user
-    li      $v0,8                   # syscall for string read
-    move    $a0,$a1                 # place to store string
-    li      $a1,256                 # maximum length of string
-    syscall
-
-    li      $v1,0x0A                # ASCII value for newline
-    move    $a1,$a0                 # remember start of string
-
-# strip newline and get string length
-prompt_nltrim:
-    lb      $v0,0($a0)              # get next char in string
-    addi    $a0,$a0,1               # pre-increment by 1 to point to next char
-    beq     $v0,$v1,prompt_nldone   # is it newline? if yes, fly
-    bnez    $v0,prompt_nltrim       # is it EOS? no, loop
-
-prompt_nldone:
-    subi    $a0,$a0,1               # compensate for pre-increment
-    sb      $zero,0($a0)            # zero out the newline
-    sub     $v0,$a0,$a1             # get string length
-    jr      $ra                     # return
-
-# strcat -- append string
-#
-# RETURNS:
-#   a0 -- updated to end of destination
-#
-# arguments:
-#   a0 -- pointer to destination buffer
-#   a1 -- pointer to source buffer
-#
-# clobbers:
-#   v0 -- current char
-strcat:
-    lb      $v0,0($a1)              # get the current char
-    beqz    $v0,strcat_done         # is char 0? if yes, done
-
-    sb      $v0,0($a0)              # store the current char
-
-    addi    $a0,$a0,1               # advance destination pointer
-    addi    $a1,$a1,1               # advance source pointer
-    j       strcat
-
-strcat_done:
-    sb      $zero,0($a0)            # add EOS
-    jr      $ra                     # return
-"""
-
-
-            
-code_block.append(strcat)
-'''
 data_block.append("ERROR:     .asciiz \"Semantic Error\"\n")
 # generate and write into the .asm file
 output_mips.write(".data \n")
@@ -541,7 +466,7 @@ for d in code_block:
     print(d)
     output_mips.write(d+"\n")
 
-
+print("\nOutput MIPS Assembly file generated: output.asm")
 # close fd
 ir_file.close()
 output_mips.close()

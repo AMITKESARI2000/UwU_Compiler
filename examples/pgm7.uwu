@@ -1,20 +1,19 @@
-function true_key(){
-  print("true key, good");
-}
-
-function false_key(){
-  print("false key, bad");
-}
-
 function main(){
-  const user_key = "keykeyspecialkey";
+  let arr[3][3][2];
 
-  if(user_key[0] == 'k'){
-    true_key();
-  }else if(user_key[0] == '2'){
-    false_key();
-  }else{
-    true_key();
-  }
+  arr[0][2][1] = 10 + 11;
 
-}
+  let c = 0;
+
+  print(arr[0][2][1]);
+
+  c = c + 10;
+  
+  arr[0][2][1] = c;
+  
+  print(c + "\n");
+  print(arr[0][2][1]);
+
+  return 0;
+
+}@@@
