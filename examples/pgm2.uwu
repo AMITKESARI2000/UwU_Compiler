@@ -1,19 +1,11 @@
 
 function main() {
-    let ff = 20;
     let i = 5;
     input(i);
-    
-    $* something else *$
-    if(i < ff && ff == 20) {
-        i += 2;
-    }
-    else{
-        i++;
-    }
-    print(i + "\n");
-    print("output: " + ff + "\n");
-    print("input: " + i + "\n");
-    $* ending loop with some test chars: ** @#$%^&*.|\! *$
+    print("Integer Input:" + i + "\n");
+
+    input(i,1);
+    print("String Input:" + i + "\n");
+
     return 0;
 }@@@

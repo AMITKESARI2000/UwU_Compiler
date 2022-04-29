@@ -1,11 +1,11 @@
 function main(){
-  let k = "hello";
+  let k = 0;
   let i = 0;
 
-  if(k == "hello"){
+  if(k == 0){
     i=0;
     loop(i<10){
-      print(k+"\n");
+      print(i+"\n");
     }(i++)
   }else{
     i=0;
@@ -14,4 +14,5 @@ function main(){
     }(i++)
   }
 
+  return 0;
 }@@@

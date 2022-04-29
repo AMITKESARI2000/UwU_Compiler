@@ -1,17 +1,14 @@
-function main(){
-  let n=10;
-  let a[n];
-  let c[10][39] [40] [o];
+function greet() {
   let i=0;
-
-  loop(i<n){
-    a[i] = 1;
+  loop(i < 10) {
+    print("Hello sir\n");
   }(i++)
+  return 0;
+}
 
-  i=0;
-  
-  loop(i<n){
-    print(c[i][12][12][12]+"\n");
-  }(i++)
-
+function main() {
+	$* call greetings *$
+  let k = 0;
+	greet();
+  return 0;
 }@@@

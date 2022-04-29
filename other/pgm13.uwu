@@ -1,0 +1,9 @@
+function main(){
+  let i = 123244;
+  let j;
+  loop(i+100 + 0 >0){
+      j=i%10;
+      print(j);
+      i=i/10;
+  }(i=i+10)
+}

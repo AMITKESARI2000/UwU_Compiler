@@ -156,7 +156,7 @@ RETURN {add('K',$1.name); } EXPR SEMICOL{
 							ircode = $3.nd->code+"\n$v1 = "+$3.nd->token+" \nreturn_func\n";
 							$$.nd = mknode($1.nd, $3.nd, "RETURN", ircode); irtempCount = 0;}|
 FUNCTIONCALL SEMICOL { 
-						ircode = "GOTO Label_" + (string)$1.nd->token;
+						ircode = "GOTO Label_" + (string)$1.nd->token+"\n";
 						irtempCount = 0;
 						$$.nd=mknode(NULL,NULL,$1.nd->token,ircode);}|
 FUNCTIONDEF |
@@ -369,7 +369,7 @@ IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE LCPAREN stment_seq RC
 										elseend = irLabelCount++;
 										ircode += to_string(iflastindex) + " \n"; add('K',$1.name); 
 										struct node *iff = mknode($3.nd, $6.nd, "IF", ircode); 
-										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":";
+										ircode = ircode + $6.nd->code + "\n GOTO Label_"+to_string(elseend)+"\n Label_"+to_string(iflastindex)+": " + $10.nd->code+"\n Label_"+to_string(elseend) +":\n";
 										$$.nd = mknode(iff, $10.nd, "if-else", ircode,elseend);
 										    }|
 IF LPAREN CONDITION RPAREN LCPAREN stment_seq RCPAREN ELSE CONDITIONAL_STAMENT{ 
@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
 		std::cout<<std::setw(space)<<symbolTable[i].id_name<<std::setw(space)<< symbolTable[i].data_type<<std::setw(space)<< symbolTable[i].type<<std::setw(space)<< symbolTable[i].line_no<<std::endl;
 		// printf("\t%s\t%s\t%s\t%d\t\n", symbolTable[i].id_name, symbolTable[i].data_type, symbolTable[i].type, symbolTable[i].line_no);
 	}
-	printtree(head);
+	// printtree(head);
 	for(i=0;i<count;i++){
 		free(symbolTable[i].id_name);
 		free(symbolTable[i].type);

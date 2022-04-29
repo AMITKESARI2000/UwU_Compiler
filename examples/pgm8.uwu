@@ -1,18 +1,22 @@
 function main(){
-  if(day == 1 || day<=2){
-    print("Monday");
-  }else if(day == 3){
-    print("Wednesday");
-  }else if(day == 4){
-    print("Thursday");
-  }else if(day == 5){
-    print("Friday");
-  }else if(day == 6){
-    print("Saturday");
-  }else if(day == 7){
-    print("Sunday");
-  }else{
-    print("Invalid Input");
-  }
+
+  $*
+    Errors to show
+  *$
+
+  let arr[10];
+  let a  = 1;
+  let b = 2;
+
+  let c = a  b;
+
+  print(a]);
+
+  arr[2]] = 0;
+
+
+  a = ;
+
+
 
 }@@@
