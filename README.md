@@ -20,7 +20,10 @@ Our primary goal is to create a bespoke language based on the numerous programmi
 
 ## LANGUAGE AND TOOL CHOICES
 Compiler for a new language named uwu is created using lex, yacc,cpp and shell. Code Generation is written in python and the output is assembly code according to the MIPS architecture. This is finally run using QTSpim. 
+
+
 ## MAJOR COMPONENTS OF PROJECT
+
 ### Pre-Processor
 Pre process the uwu file, adding Headers (eg: `#add <./examples/pgm2.uwu>` ) and Macros (eg:`#define pp::print`) 
 
@@ -68,9 +71,9 @@ Our code does not contain the constructs for classes & struct.
 We were able to implement different components of compiler design and wrote lex and yacc files using the Bison package. We have tried to explore the actual phases of Compiler by implementing them practically. We have also modularized our project to the greatest extent feasible so that these Modules can operate independently of one another and can be improved in the future. The Code generation part has also been made isolated so that any target could be made from the generated Tree. We were able to take advantage of this feature and quickly switch our target assembly code from X86 to MIPS. Overall, the job was completed as a collaborative effort, and we utilized GitHub to share the source and manage task and role distributions.
 
 ## CONTRIBUTIONS
-Aditya - Language Specification Planning, Generating CFGs, Implementing Syntax analyzer, Writing report, MIPS Machine Code Generation, Testing our compiler with heavy codes, qtspim.
-Amit - Implementing Lexical analyzer, Testing Generating Syntax tree, Error detecting implementation, IR code Generation, Simulating MIPS on QtSpim.
-Vaibhav - Symbol Table, Parse Tree, Checking the generated tokens, Doing register allocation, Sample programs, User and developer manual.
+- Aditya - Language Specification Planning, Generating CFGs, Implementing Syntax analyzer, Writing report, MIPS Machine Code Generation, Testing our compiler with heavy codes, qtspim.
+- Amit - Implementing Lexical analyzer, Testing Generating Syntax tree, Error detecting implementation, IR code Generation, Simulating MIPS on QtSpim.
+- Vaibhav - Symbol Table, Parse Tree, Checking the generated tokens, Doing register allocation, Sample programs, User and developer manual.
 
 
 

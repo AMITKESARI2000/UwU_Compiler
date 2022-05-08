@@ -1,11 +1,5 @@
-#add <./examples/pgm_pre.uwu>
-#define pp::print
-#define l::let
+$*
 
-function main(){
-  l i = 0;
+Function with params
 
-  say_hi_from_out();
-
-  return 0;
-}@@@
+*$

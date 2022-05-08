@@ -1,22 +1,18 @@
 function main(){
+  let k = 0;
+  let i = 0;
 
-  $*
-    Errors to show
-  *$
+  if(k == 0){
+    i=0;
+    loop(i<10){
+      print(i+"\n");
+    }(i++)
+  }else{
+    i=0;
+    loop(i<10){
+      print("Bad \n");
+    }(i++)
+  }
 
-  let arr[10];
-  let a  = 1;
-  let b = 2;
-
-  let c = a  b;
-
-  print(a]);
-
-  arr[2]] = 0;
-
-
-  a = ;
-
-
-
+  return 0;
 }@@@
